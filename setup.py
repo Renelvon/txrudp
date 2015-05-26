@@ -29,5 +29,5 @@ if __name__ == '__main__':
         ),
         keywords=('rudp', 'twisted', 'reliable'),
         packages=find_packages(exclude=('tests',)),
-        install_requires=('twisted',),
+        install_requires=('twisted', 'jsonschema'),
     )
