@@ -1,0 +1,2 @@
+jsonschema>=2.4.0
+twisted>=15.2.0
