@@ -7,11 +7,17 @@ UDP_SAFE_PACKET_SIZE = 1000
 WINDOW_SIZE = 65535 // UDP_SAFE_PACKET_SIZE
 
 # [seconds]
-TIMEOUT = 0.7
+PACKET_TIMEOUT = 0.7
+
+# [seconds]
+BARE_ACK_TIMEOUT = 0.3
+
+# [seconds]
+KEEP_ALIVE_TIMEOUT = 5
 
 # [seconds]
 _MAX_PACKET_DELAY = 20
 
 # If a packet is retransmitted more than that many times,
 # the connection should be considered broken.
-MAX_RETRANSMISSIONS = _MAX_PACKET_DELAY // TIMEOUT
+MAX_RETRANSMISSIONS = _MAX_PACKET_DELAY // PACKET_TIMEOUT
