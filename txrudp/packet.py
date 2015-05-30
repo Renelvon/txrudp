@@ -31,6 +31,17 @@ RUDP_PACKET_JSON_SCHEMA = {
             'minimum': 1,
             'maximum': 65535
         },
+        'source_ip': {
+            'anyOf': [
+                {'type': 'string', 'format': 'ipv4'},
+                {'type': 'string', 'format': 'ipv6'},
+            ]
+        },
+        'source_port': {
+            'type': 'integer',
+            'minimum': 1,
+            'maximum': 65535
+        },
         'payload': {
             'type': 'string',
             'default': ''
@@ -59,6 +70,8 @@ RUDP_PACKET_JSON_SCHEMA = {
         'sequence_number',
         'dest_ip',
         'dest_port',
+        'source_ip',
+        'source_port',
         'payload',
         'ack',
         'fin',
@@ -78,6 +91,8 @@ class RUDPPacket(object):
         sequence_number,
         dest_ip,
         dest_port,
+        source_ip,
+        source_port,
         payload='',
         more_fragments=0,
         ack=0,
@@ -91,6 +106,8 @@ class RUDPPacket(object):
             seqnum: The packet's sequence number, as an int.
             dest_ip: The destination IPv4/IPv6, as a string.
             dest_port: The destination port, as an integer.
+            source_ip: The source IPv4/IPv6, as a string.
+            source_port: The source port, as an integer.
             payload: The packet's payload, as a string.
             more_fragments: The number of segments that follow this
                 packet and are delivering remaining parts of the same
@@ -108,6 +125,8 @@ class RUDPPacket(object):
         self.sequence_number = sequence_number
         self.dest_ip = dest_ip
         self.dest_port = dest_port
+        self.source_ip = source_ip
+        self.source_port = source_port
         self.payload = payload
         self.more_fragments = more_fragments
         self.ack = ack
@@ -138,6 +157,8 @@ class RUDPPacket(object):
             'sequence_number': self.sequence_number,
             'dest_ip': self.dest_ip,
             'dest_port': self.dest_port,
+            'source_ip': self.source_ip,
+            'source_port': self.source_port,
             'payload': self._payload,
             'more_fragments': self.more_fragments,
             'ack': self.ack,
@@ -175,7 +196,9 @@ class RUDPPacket(object):
         """
         sequence_number = int(json_obj['sequence_number'])
         dest_ip = json_obj['dest_ip']
-        dest_port = int(json_obj['dest_ip'])
+        dest_port = int(json_obj['dest_port'])
+        source_ip = json_obj['source_ip']
+        source_port = int(json_obj['source_port'])
         payload = json_obj['payload']
         more_fragments = json_obj['more_fragments']
         ack = int(json_obj['ack'])
@@ -186,6 +209,8 @@ class RUDPPacket(object):
             sequence_number,
             dest_ip,
             dest_port,
+            source_ip,
+            source_port,
             payload,
             more_fragments,
             ack,
