@@ -16,17 +16,40 @@ class ConnectionMultiplexer(
     Handles graceful shutdown of active connections.
     """
 
-    def __init__(self, connection_factory):
+    def __init__(self, connection_factory, relaying=False):
         """
         Initialize a new multiplexer.
 
         Args:
-            connection_factory: The connection factory used to instantiate
-                new connections, as a connection.RUDPConnectionFactory.
+            connection_factory: The connection factory used to
+                instantiate new connections, as a
+                connection.RUDPConnectionFactory.
+            relaying: If True, the multiplexer will silently forward
+                packets that are not targeting this node.
         """
         super(ConnectionMultiplexer, self).__init__()
+        self.relaying = relaying
         self._active_connections = {}
+        self._own_address = None
         self._connection_factory = connection_factory
+
+    def makeConnection(self, transport):
+        """
+        Attach the protocol to the transport layer.
+
+        Args:
+            transport: A transport that is an instance of
+                twisted.internet.interfaces.IUDPTransport and also
+                implements `getHost` and `loseConnection` methods.
+        """
+        super(ConnectionMultiplexer, self).makeConnection(transport)
+        assert transport.hasattr('getHost'), (
+            'Transport does not provide `getHost` method.'
+        )
+        assert transport.hasattr('loseConnection'), (
+            'Transport does not provide `loseConnection` method.'
+        )
+        self._own_address = self.transport.getHost()
 
     def __len__(self):
         """Return the number of live connections."""
@@ -80,28 +103,60 @@ class ConnectionMultiplexer(
         """
         Called when a datagram is received.
 
+        If the datagram isn't meant for us, immediately relay it.
+        Otherwise, delegate handling to the appropriate connection.
+        If no such connection exists, create one. Always take care
+        to avoid mistaking a relay address for the original sender's
+        address.
+
         Args:
             datagram: Datagram string received from transport layer.
             addr: Sender address, as a tuple of an IPv4/IPv6 address
-                and a port, in that order.
+                and a port, in that order. If this address is
+                different from the packet's source address, the packet
+                is being relayed; future outbound packets should also
+                be relayed through the specified relay address.
         """
-        con = self._active_connections.get(addr)
-        if con is None:
-            con = self.make_new_connection(addr)
-        con.receive_packet(datagram)
+        try:
+            json_obj = json.loads(datagram)
+            rudp_packet = packet.RUDPPacket.from_unvalidated_json(json_obj)
+        except (ValueError, TypeError, jsonschema.ValidationError):
+            log.err()
+        else:
+            dest_addr = (rudp_packet.dest_ip, rudp_packet.dest_port)
+            if dest_addr != self._own_address:
+                if self.relaying:
+                    self.transport.write(datagram, dest_addr)
+            else:
+                source_addr = (rudp_packet.source_ip, rudp_packet.source_port)
+                con = self._active_connections.get(source_addr)
+                if con is None:
+                    con = self.make_new_connection(
+                        self._own_address,
+                        source_addr,
+                        addr
+                    )
+                con.receive_packet(datagram)
 
-    def make_new_connection(self, addr):
+    def make_new_connection(self, own_addr, source_addr, relay_addr=None):
         """
         Create a new connection to handle the given address.
 
         Args:
-            addr: Tuple of destination address (ip, port).
+            own_addr: Local host address, as a (ip, port) tuple.
+            source_addr: Remote host address, as a (ip, port) tuple.
+            relay_addr: Remote host address, as a (ip, port) tuple.
 
         Returns:
             A new connection.RUDPConnection
         """
-        con = self._connection_factory.make_new_connection(self, addr)
-        self._active_connections[addr] = con
+        con = self._connection_factory.make_new_connection(
+            self,
+            own_addr,
+            source_addr,
+            relay_addr
+        )
+        self._active_connections[source_addr] = con
         return con
 
     def send_datagram(self, datagram, addr):
