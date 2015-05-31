@@ -1,6 +1,5 @@
 """Simple heap used as reorder buffer for received packets."""
 
-import collections
 import heapq
 
 
