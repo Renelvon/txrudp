@@ -48,12 +48,6 @@ class ConnectionMultiplexer(
                 implements `getHost` and `loseConnection` methods.
         """
         super(ConnectionMultiplexer, self).makeConnection(transport)
-        assert transport.hasattr('getHost'), (
-            'Transport does not provide `getHost` method.'
-        )
-        assert transport.hasattr('loseConnection'), (
-            'Transport does not provide `loseConnection` method.'
-        )
         self._own_address = self.transport.getHost()
 
     def __len__(self):
