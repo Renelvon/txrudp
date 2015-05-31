@@ -12,7 +12,7 @@ import random
 
 from twisted.internet import reactor, task
 
-from rudp import constants, heap, packet
+from txrudp import constants, heap, packet
 
 
 class RUDPConnection(object):
