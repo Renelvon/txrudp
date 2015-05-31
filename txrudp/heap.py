@@ -9,7 +9,7 @@ class EmptyHeap(Exception):
     """Raised when popping from empty heap."""
 
 
-class Heap(collections.Sequence):
+class Heap(object):
 
     """
     A min-heap for packets implementing total ordering.
@@ -22,27 +22,6 @@ class Heap(collections.Sequence):
         """Create a new (empty) Heap."""
         self._heap = []
         self._seqnum_set = set()
-
-    def __getitem__(self, index):
-        """
-        Get packet at given index.
-
-        Args:
-            index: The index of the requested packet.
-
-        Returns:
-            Packet at given index. The only packet guaranteed
-            to have a specific seqnum is the one at index 0, which
-            shall be the packet with the minimum seqnum in the heap
-            (assuming a non-empty heap.)
-        Raises:
-            IndexError: No packet resides in given index.
-        """
-        return self._heap[index]
-
-    def __len__(self):
-        """Return number of packets inside heap."""
-        return len(self._heap)
 
     def push(self, rudp_packet):
         """
