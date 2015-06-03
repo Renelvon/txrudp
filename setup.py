@@ -32,7 +32,7 @@ setup(
     packages=find_packages(exclude=('tests',)),
     install_requires=('twisted', 'jsonschema'),
     extras_require={
-        'dev': ('prospector',)
+        'dev': ('prospector', 'nose')
     },
     zip_safe=False
 )
