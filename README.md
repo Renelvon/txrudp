@@ -1,5 +1,6 @@
 # txrudp
 
+[![Build Status](https://travis-ci.org/Renelvon/txrudp.svg?branch=master)](https://travis-ci.org/Renelvon/txrudp)
 [![Code Health](https://landscape.io/github/Renelvon/txrudp/master/landscape.svg?style=plastic)](https://landscape.io/github/Renelvon/txrudp/master)
 
 Implementation of a Reliable UDP Protocol Layer over Twisted.
