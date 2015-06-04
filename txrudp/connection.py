@@ -486,9 +486,7 @@ class RUDPConnection(object):
 
         If successful, advance ACK number.
         """
-        fragments = self._receive_heap.attempt_popping_all_fragments(
-            self._next_expected_seqnum
-        )
+        fragments = self._receive_heap.attempt_popping_all_fragments()
         if fragments is None:
             self._attempt_disabling_looping_receive()
         else:

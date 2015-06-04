@@ -4,11 +4,6 @@ import collections
 import heapq
 
 
-class EmptyHeap(Exception):
-
-    """Raised when popping from empty heap."""
-
-
 class Heap(collections.Container, collections.Sized):
 
     """
@@ -46,37 +41,19 @@ class Heap(collections.Container, collections.Sized):
         heapq.heappush(self._heap, rudp_packet)
         self._seqnum_set.add(rudp_packet.sequence_number)
 
-    def pop_min(self):
+    def _pop_min(self):
+        """Pop the packet at the top of the heap."""
+        rudp_packet = heapq.heappop(self._heap)
+        self._seqnum_set.remove(rudp_packet.sequence_number)
+        return rudp_packet
+
+    def pop_min_and_all_fragments(self):
         """
-        Pop the packet at the top of the heap.
+        Attempt to pop the packet at the top, and its fragments.
 
-        Returns:
-            A packet.RUDPPacket
-
-        Raises:
-            EmptyHeap: The heap is empty.
-            KeyError: The packet's sequence number is not listed
-                in the seqnum set; some invariant has been violated.
-        """
-        try:
-            rudp_packet = heapq.heappop(self._heap)
-        except IndexError:
-            raise EmptyHeap('Cannot pop from empty heap.')
-        else:
-            self._seqnum_set.remove(rudp_packet.sequence_number)
-            return rudp_packet
-
-    def attempt_popping_all_fragments(self, sequence_number):
-        """
-        Attempt to pop all fragments of packet with given seqnum.
-
-        This will only succeed if the said packet is at the top
-        of the heap and all its other fragments reside in the heap.
-        In such a case all the fragments of the said packet are
+        For the operation to succedd, all the fragments of the minimum
+        packet should reside in the heap. If so, all fragments are
         popped from the heap and returned in order.
-
-        Args:
-            sequence_number: The sequence_number of the target packet.
 
         Returns:
             Tuple of packet.RUDPPackets, ordered by increasing seqnum,
@@ -86,9 +63,6 @@ class Heap(collections.Container, collections.Sized):
             return None
 
         min_packet = self._heap[0]
-        if min_packet.sequence_number != sequence_number:
-            return None
-
         fragments_seqnum_set = set(
             min_packet.sequence_number + i
             for i in range(min_packet.more_fragments + 1)
@@ -98,8 +72,8 @@ class Heap(collections.Container, collections.Sized):
 
         # If all the requirements are satisfied, then, because the
         # fragments have 'sequential' sequence numbers, we can get all
-        # of them with repeated calls to `pop_min`.
+        # of them with repeated calls to `_pop_min`.
         return tuple(
-            self._heap.pop_min()
+            self._pop_min()
             for _ in range(min_packet.more_fragments + 1)
         )
