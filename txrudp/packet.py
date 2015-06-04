@@ -159,7 +159,7 @@ class RUDPPacket(object):
             'dest_port': self.dest_port,
             'source_ip': self.source_ip,
             'source_port': self.source_port,
-            'payload': self._payload,
+            'payload': self.payload,
             'more_fragments': self.more_fragments,
             'ack': self.ack,
             'fin': self.fin,
