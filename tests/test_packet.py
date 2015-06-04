@@ -152,7 +152,19 @@ class TestPacketAPI(unittest.TestCase):
         self._assert_json_fails_validation(bad_json)
 
     def test_from_validated_bad_json_with_bad_dest_ip(self):
-        pass
+        bad_json = dict(self.json_dict)
+
+        bad_json['dest_ip'] = 42
+        self._assert_json_fails_validation(bad_json)
+
+        bad_json['dest_ip'] = '127.0'
+        self._assert_json_fails_validation(bad_json)
+
+        bad_json['dest_ip'] = 'FE80:0000:0000::z:B3FF:FE1E:8329'
+        self._assert_json_fails_validation(bad_json)
+
+        del bad_json['dest_ip']
+        self._assert_json_fails_validation(bad_json)
 
     def test_from_validated_bad_json_with_bad_dest_port(self):
         bad_json = dict(self.json_dict)
@@ -170,7 +182,19 @@ class TestPacketAPI(unittest.TestCase):
         self._assert_json_fails_validation(bad_json)
 
     def test_from_validated_bad_json_with_bad_source_ip(self):
-        pass
+        bad_json = dict(self.json_dict)
+
+        bad_json['source_ip'] = 42
+        self._assert_json_fails_validation(bad_json)
+
+        bad_json['source_ip'] = '127.0'
+        self._assert_json_fails_validation(bad_json)
+
+        bad_json['source_ip'] = 'FE80:0000:0000:z::B3FF:FE1E:8329'
+        self._assert_json_fails_validation(bad_json)
+
+        del bad_json['source_ip']
+        self._assert_json_fails_validation(bad_json)
 
     def test_from_validated_bad_json_with_bad_source_port(self):
         bad_json = dict(self.json_dict)

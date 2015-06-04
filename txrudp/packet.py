@@ -10,6 +10,12 @@ import functools
 
 import jsonschema
 
+# NOTE: jsonschema's `format` specifier was tested and found
+# lacking. Hence the use of regexes from Regular Expressions Cookbook.
+# For now, only standard (non-compressed) IPv6 addresses are
+# supported. This might change in the future.
+_IPV4_REGEX = '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+_IPV6_REGEX = '^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$'
 
 RUDP_PACKET_JSON_SCHEMA = {
     '$schema': 'http://json-schema.org/schema#',
@@ -22,8 +28,8 @@ RUDP_PACKET_JSON_SCHEMA = {
         },
         'dest_ip': {
             'anyOf': [
-                {'type': 'string', 'format': 'ipv4'},
-                {'type': 'string', 'format': 'ipv6'},
+                {'type': 'string', 'pattern': _IPV4_REGEX},
+                {'type': 'string', 'pattern': _IPV6_REGEX}
             ]
         },
         'dest_port': {
@@ -33,8 +39,8 @@ RUDP_PACKET_JSON_SCHEMA = {
         },
         'source_ip': {
             'anyOf': [
-                {'type': 'string', 'format': 'ipv4'},
-                {'type': 'string', 'format': 'ipv6'},
+                {'type': 'string', 'pattern': _IPV4_REGEX},
+                {'type': 'string', 'pattern': _IPV6_REGEX}
             ]
         },
         'source_port': {
