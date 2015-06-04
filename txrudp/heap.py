@@ -1,5 +1,6 @@
 """Simple heap used as reorder buffer for received packets."""
 
+import collections
 import heapq
 
 
@@ -8,7 +9,7 @@ class EmptyHeap(Exception):
     """Raised when popping from empty heap."""
 
 
-class Heap(object):
+class Heap(collections.Container, collections.Sized):
 
     """
     A min-heap for packets implementing total ordering.
@@ -21,6 +22,19 @@ class Heap(object):
         """Create a new (empty) Heap."""
         self._heap = []
         self._seqnum_set = set()
+
+    def __contains__(self, sequence_number):
+        """
+        Check whether the Heap contains a packet with given seqnum.
+
+        Args:
+            sequence_number: The sequence_number, as an integer.
+        """
+        return sequence_number in self._seqnum_set
+
+    def __len__(self):
+        """Return the size of the heap."""
+        return len(self._heap)
 
     def push(self, rudp_packet):
         """
