@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Renelvon/txrudp.svg?branch=master)](https://travis-ci.org/Renelvon/txrudp)
 [![Code Health](https://landscape.io/github/Renelvon/txrudp/master/landscape.svg?style=plastic)](https://landscape.io/github/Renelvon/txrudp/master)
+[![Coverage Status](https://coveralls.io/repos/Renelvon/txrudp/badge.svg)](https://coveralls.io/r/Renelvon/txrudp)
 
 Implementation of a Reliable UDP Protocol Layer over Twisted.
 
