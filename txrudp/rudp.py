@@ -21,7 +21,7 @@ class ConnectionMultiplexer(
     Handles graceful shutdown of active connections.
     """
 
-    def __init__(self, connection_factory, relaying=False):
+    def __init__(self, connection_factory, public_ip, relaying=False):
         """
         Initialize a new multiplexer.
 
@@ -29,13 +29,17 @@ class ConnectionMultiplexer(
             connection_factory: The connection factory used to
                 instantiate new connections, as a
                 connection.RUDPConnectionFactory.
+            public_ip: The external IPv4/IPv6 this node publishes as its
+                reception address.
             relaying: If True, the multiplexer will silently forward
-                packets that are not targeting this node.
+                packets that are not targeting this node (i.e. messages
+                that have a destination IP different than `public_ip`.)
+                If False, this node will drop such messages.
         """
         super(ConnectionMultiplexer, self).__init__()
+        self.public_ip = public_ip
         self.relaying = relaying
         self._active_connections = {}
-        self._own_address = None
         self._connection_factory = connection_factory
 
     def makeConnection(self, transport):
@@ -48,7 +52,6 @@ class ConnectionMultiplexer(
                 implements `getHost` and `loseConnection` methods.
         """
         super(ConnectionMultiplexer, self).makeConnection(transport)
-        self._own_address = self.transport.getHost()
 
     def __len__(self):
         """Return the number of live connections."""
@@ -123,7 +126,7 @@ class ConnectionMultiplexer(
             log.err()
         else:
             dest_addr = (rudp_packet.dest_ip, rudp_packet.dest_port)
-            if dest_addr != self._own_address:
+            if dest_addr != self.public_ip:
                 if self.relaying:
                     self.transport.write(datagram, dest_addr)
             else:
