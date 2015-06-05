@@ -1,0 +1,63 @@
+import unittest
+
+import mock
+from twisted.internet import protocol
+from twisted.test import proto_helpers
+
+from txrudp import heap, packet, rudp
+
+
+class TestConnectionManagerAPI(unittest.TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        cls.public_ip = '123.45.67.89'
+        cls.port = 12345
+        cls.addr = (cls.public_ip, cls.port)
+
+    def _make_cm_with_mocks(self):
+        cf = mock.Mock()
+        return rudp.ConnectionMultiplexer(cf, self.public_ip)
+
+    def test_default_init(self):
+        cf = mock.Mock()
+        cm = rudp.ConnectionMultiplexer(cf, self.public_ip)
+        self.assertIsInstance(cm, protocol.DatagramProtocol)
+        self.assertEqual(cm.public_ip, self.public_ip)
+        self.assertFalse(cm.relaying)
+        self.assertEqual(len(cm), 0)
+
+    def test_full_init(self):
+        cf = mock.Mock()
+        cm = rudp.ConnectionMultiplexer(
+            connection_factory=cf,
+            public_ip='192.168.1.1',
+            relaying=True
+        )
+        self.assertIsInstance(cm, protocol.DatagramProtocol)
+        self.assertEqual(cm.public_ip, '192.168.1.1')
+        self.assertTrue(cm.relaying)
+        self.assertIsNone(cm.transport)
+        self.assertEqual(len(cm), 0)
+
+    def test_make_connection(self):
+        transport = proto_helpers.StringTransportWithDisconnection()
+        cm = self._make_cm_with_mocks()
+        cm.makeConnection(transport)
+        self.assertIs(cm.transport, transport)
+
+    def test_get_nonexistent_connection(self):
+        cm = self._make_cm_with_mocks()
+        self.assertNotIn(self.addr, cm)
+        with self.assertRaises(KeyError):
+            con = cm[self.addr]
+        
+    def test_set_and_get_new_connection(self):
+        cm = self._make_cm_with_mocks()
+        mock_connection = mock.Mock()
+        cm[self.addr] = mock_connection
+        self.assertIn(self.addr, cm)
+        self.assertEqual(cm[self.addr], mock_connection)
+
+    def test_set_existent_connection(self):
+        pass
