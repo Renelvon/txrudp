@@ -60,4 +60,25 @@ class TestConnectionManagerAPI(unittest.TestCase):
         self.assertIs(cm[self.addr], mock_connection)
 
     def test_set_existent_connection(self):
-        pass
+        cm = self._make_cm_with_mocks()
+        mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
+        cm[self.addr] = mock_connection1
+        cm[self.addr] = mock_connection2
+        self.assertIn(self.addr, cm)
+        self.assertIs(cm[self.addr], mock_connection2)
+        mock_connection1.shutdown.assert_called_once_with()
+        mock_connection2.shutdown.assert_not_called()
+
+    def test_del_nonexistent_connection(self):
+        cm = self._make_cm_with_mocks()
+        self.assertNotIn(self.addr, cm)
+        with self.assertRaises(KeyError):
+            del cm[self.addr]
+
+    def test_del_existent_connection(self):
+        cm = self._make_cm_with_mocks()
+        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
+        cm[self.addr] = mock_connection
+        del cm[self.addr]
+        self.assertNotIn(self.addr, cm)
