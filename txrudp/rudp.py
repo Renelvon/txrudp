@@ -48,8 +48,7 @@ class ConnectionMultiplexer(
 
         Args:
             transport: A transport that is an instance of
-                twisted.internet.interfaces.IUDPTransport and also
-                implements `getHost` and `loseConnection` methods.
+                twisted.internet.interfaces.IUDPTransport.
         """
         super(ConnectionMultiplexer, self).makeConnection(transport)
 
@@ -178,4 +177,6 @@ class ConnectionMultiplexer(
         """Shutdown all active connections and then terminate protocol."""
         for connection in self._active_connections:
             connection.shutdown()
-        self.transport.loseConnection()
+
+        if hasattr(self.transport, 'loseConnection'):
+            self.transport.loseConnection()
