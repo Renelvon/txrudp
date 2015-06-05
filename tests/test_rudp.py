@@ -4,7 +4,7 @@ import mock
 from twisted.internet import protocol
 from twisted.test import proto_helpers
 
-from txrudp import heap, packet, rudp
+from txrudp import connection, heap, packet, rudp
 
 
 class TestConnectionManagerAPI(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cls.addr = (cls.public_ip, cls.port)
 
     def _make_cm_with_mocks(self):
-        cf = mock.Mock()
+        cf = mock.Mock(spec_set=connection.RUDPConnectionFactory)
         return rudp.ConnectionMultiplexer(cf, self.public_ip)
 
     def test_default_init(self):
@@ -54,10 +54,10 @@ class TestConnectionManagerAPI(unittest.TestCase):
         
     def test_set_and_get_new_connection(self):
         cm = self._make_cm_with_mocks()
-        mock_connection = mock.Mock()
+        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
         cm[self.addr] = mock_connection
         self.assertIn(self.addr, cm)
-        self.assertEqual(cm[self.addr], mock_connection)
+        self.assertIs(cm[self.addr], mock_connection)
 
     def test_set_existent_connection(self):
         pass
