@@ -1,3 +1,4 @@
+import collections
 import unittest
 
 import mock
@@ -23,6 +24,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cf = mock.Mock()
         cm = rudp.ConnectionMultiplexer(cf, self.public_ip)
         self.assertIsInstance(cm, protocol.DatagramProtocol)
+        self.assertIsInstance(cm, collections.MutableMapping)
         self.assertEqual(cm.public_ip, self.public_ip)
         self.assertFalse(cm.relaying)
         self.assertEqual(len(cm), 0)
@@ -34,11 +36,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
             public_ip='192.168.1.1',
             relaying=True
         )
-        self.assertIsInstance(cm, protocol.DatagramProtocol)
         self.assertEqual(cm.public_ip, '192.168.1.1')
         self.assertTrue(cm.relaying)
-        self.assertIsNone(cm.transport)
-        self.assertEqual(len(cm), 0)
 
     def test_make_connection(self):
         transport = proto_helpers.StringTransportWithDisconnection()
@@ -82,3 +81,14 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm[self.addr] = mock_connection
         del cm[self.addr]
         self.assertNotIn(self.addr, cm)
+
+    def test_iter(self):
+        cm = self._make_cm_with_mocks()
+        mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
+        cm[self.addr] = mock_connection1
+        cm[(self.public_ip, self.port + 1)] = mock_connection2
+        self.assertItemsEqual(
+            iter(cm),
+            (self.addr, (self.public_ip, self.port + 1))
+        )
