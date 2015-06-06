@@ -1,4 +1,5 @@
 import collections
+import json
 import unittest
 
 import mock
@@ -92,3 +93,37 @@ class TestConnectionManagerAPI(unittest.TestCase):
             iter(cm),
             (self.addr, (self.public_ip, self.port + 1))
         )
+
+    def test_send_datagram(self):
+        transport = mock.Mock()
+        cm = self._make_cm_with_mocks()
+        cm.makeConnection(transport)
+        rudp_packet = packet.RUDPPacket(
+            1,
+            '132.54.76.98',
+            23456,
+            self.public_ip,
+            self.port
+        )
+        datagram = json.dumps(rudp_packet.to_json())
+
+        cm.send_datagram(datagram, ('132.54.76.98', 23456))
+        transport.write.assert_called_once_with(
+            datagram,
+            ('132.54.76.98', 23456)
+        )
+
+    def test_shutdown(self):
+        cm = self._make_cm_with_mocks()
+        mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
+        cm[self.addr] = mock_connection1
+        cm[(self.public_ip, self.port + 1)] = mock_connection2
+
+        transport = mock.Mock()
+        cm.makeConnection(transport)
+
+        cm.shutdown()
+        mock_connection1.shutdown.assert_called_once_with()
+        mock_connection2.shutdown.assert_called_once_with()
+        transport.loseConnection.assert_called_once_with()

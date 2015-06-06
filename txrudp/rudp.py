@@ -175,7 +175,7 @@ class ConnectionMultiplexer(
 
     def shutdown(self):
         """Shutdown all active connections and then terminate protocol."""
-        for connection in self._active_connections:
+        for connection in self._active_connections.values():
             connection.shutdown()
 
         if hasattr(self.transport, 'loseConnection'):
