@@ -47,6 +47,7 @@ class ConnectionMultiplexer(
         super(ConnectionMultiplexer, self).__init__()
         self.connection_factory = connection_factory
         self.public_ip = public_ip
+        self.port = None
         self.relaying = relaying
         self._active_connections = {}
         self._logger = logger
@@ -138,7 +139,7 @@ class ConnectionMultiplexer(
                 con = self._active_connections.get(source_addr)
                 if con is None:
                     con = self.make_new_connection(
-                        self._own_address,
+                        (self.public_ip, self.transport.port),
                         source_addr,
                         addr
                     )
