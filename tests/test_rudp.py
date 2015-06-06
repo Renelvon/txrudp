@@ -92,7 +92,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
         cm[self.addr1] = mock_connection1
         cm[self.addr2] = mock_connection2
-        self.assertItemsEqual(iter(cm), (self.addr1, self.addr2))
+        self.assertEqual(set(cm), {self.addr1, self.addr2})
 
     def test_receive_bad_json_datagram(self):
         cm = self._make_cm()
