@@ -52,6 +52,11 @@ class ConnectionMultiplexer(
         self._active_connections = {}
         self._logger = logger
 
+    def startProtocol(self):
+        """Start the protocol and cache listening port."""
+        super(ConnectionMultiplexer, self).startProtocol()
+        self.port = self.transport.getHost().port
+
     def __len__(self):
         """Return the number of live connections."""
         return len(self._active_connections)
@@ -139,7 +144,7 @@ class ConnectionMultiplexer(
                 con = self._active_connections.get(source_addr)
                 if con is None:
                     con = self.make_new_connection(
-                        (self.public_ip, self.transport.port),
+                        (self.public_ip, self.port),
                         source_addr,
                         addr
                     )
