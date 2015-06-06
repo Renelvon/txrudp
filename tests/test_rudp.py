@@ -17,8 +17,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cls.public_ip = '123.45.67.89'
         cls.port = 12345
         cls.addr1 = (cls.public_ip, cls.port)
-        cls.addr2 = (cls.public_ip, cls.port + 1)
-        cls.addr3 = (cls.public_ip, cls.port + 2)
+        cls.addr2 = ('132.54.76.98', 54321)
+        cls.addr3 = ('231.76.45.89', 15243)
 
     def _make_cm(self):
         cf = mock.Mock(spec_set=connection.RUDPConnectionFactory)
@@ -117,10 +117,14 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm.datagramReceived(datagram, self.addr1)
         mock_connection.receive_packet.assert_not_called()
 
-    def test_receive_relayed_datagram_but_not_relaying(self):
+    def _make_connected_cm(self):
         cm = self._make_cm()
         transport = mock.Mock()
         cm.makeConnection(transport)
+        return cm
+
+    def test_receive_relayed_datagram_but_not_relaying(self):
+        cm = self._make_connected_cm()
 
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
         source_addr = self.addr1
@@ -135,14 +139,12 @@ class TestConnectionManagerAPI(unittest.TestCase):
         )
 
         cm.datagramReceived(datagram, source_addr)
-        self.assertNotIn(dest_ip, cm)
-        transport.write.assert_not_called()
+        self.assertNotIn((dest_ip, 12345), cm)
+        cm.transport.write.assert_not_called()
         cm.connection_factory.make_new_connection.assert_not_called()
 
     def test_receive_relayed_datagram_while_relaying(self):
-        cm = self._make_cm()
-        transport = mock.Mock()
-        cm.makeConnection(transport)
+        cm = self._make_connected_cm()
         cm.relaying = True
 
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
@@ -158,8 +160,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         )
 
         cm.datagramReceived(datagram, source_addr)
-        self.assertNotIn(dest_ip, cm)
-        transport.write.assert_called_once_with(datagram, (dest_ip, 12345))
+        self.assertNotIn((dest_ip, 12345), cm)
+        cm.transport.write.assert_called_once_with(datagram, (dest_ip, 12345))
         cm.connection_factory.make_new_connection.assert_not_called()
 
     def test_make_new_connection(self):
