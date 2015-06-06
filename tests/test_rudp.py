@@ -15,7 +15,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
     def setUpClass(cls):
         cls.public_ip = '123.45.67.89'
         cls.port = 12345
-        cls.addr = (cls.public_ip, cls.port)
+        cls.addr1 = (cls.public_ip, cls.port)
+        cls.addr2 = (cls.public_ip, cls.port + 1)
 
     def _make_cm_with_mocks(self):
         cf = mock.Mock(spec_set=connection.RUDPConnectionFactory)
@@ -34,10 +35,10 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cf = mock.Mock()
         cm = rudp.ConnectionMultiplexer(
             connection_factory=cf,
-            public_ip='192.168.1.1',
+            public_ip=self.public_ip,
             relaying=True
         )
-        self.assertEqual(cm.public_ip, '192.168.1.1')
+        self.assertEqual(cm.public_ip, self.public_ip)
         self.assertTrue(cm.relaying)
 
     def test_make_connection(self):
@@ -48,51 +49,48 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
     def test_get_nonexistent_connection(self):
         cm = self._make_cm_with_mocks()
-        self.assertNotIn(self.addr, cm)
+        self.assertNotIn(self.addr1, cm)
         with self.assertRaises(KeyError):
-            con = cm[self.addr]
+            con = cm[self.addr1]
         
     def test_set_and_get_new_connection(self):
         cm = self._make_cm_with_mocks()
         mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
-        cm[self.addr] = mock_connection
-        self.assertIn(self.addr, cm)
-        self.assertIs(cm[self.addr], mock_connection)
+        cm[self.addr1] = mock_connection
+        self.assertIn(self.addr1, cm)
+        self.assertIs(cm[self.addr1], mock_connection)
 
     def test_set_existent_connection(self):
         cm = self._make_cm_with_mocks()
         mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
         mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
-        cm[self.addr] = mock_connection1
-        cm[self.addr] = mock_connection2
-        self.assertIn(self.addr, cm)
-        self.assertIs(cm[self.addr], mock_connection2)
+        cm[self.addr1] = mock_connection1
+        cm[self.addr1] = mock_connection2
+        self.assertIn(self.addr1, cm)
+        self.assertIs(cm[self.addr1], mock_connection2)
         mock_connection1.shutdown.assert_called_once_with()
         mock_connection2.shutdown.assert_not_called()
 
     def test_del_nonexistent_connection(self):
         cm = self._make_cm_with_mocks()
-        self.assertNotIn(self.addr, cm)
+        self.assertNotIn(self.addr1, cm)
         with self.assertRaises(KeyError):
-            del cm[self.addr]
+            del cm[self.addr1]
 
     def test_del_existent_connection(self):
         cm = self._make_cm_with_mocks()
         mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
-        cm[self.addr] = mock_connection
-        del cm[self.addr]
-        self.assertNotIn(self.addr, cm)
+        cm[self.addr1] = mock_connection
+        del cm[self.addr1]
+        self.assertNotIn(self.addr1, cm)
 
     def test_iter(self):
         cm = self._make_cm_with_mocks()
         mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
         mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
-        cm[self.addr] = mock_connection1
-        cm[(self.public_ip, self.port + 1)] = mock_connection2
-        self.assertItemsEqual(
-            iter(cm),
-            (self.addr, (self.public_ip, self.port + 1))
-        )
+        cm[self.addr1] = mock_connection1
+        cm[self.addr2] = mock_connection2
+        self.assertItemsEqual(iter(cm), (self.addr1, self.addr2))
 
     def test_send_datagram(self):
         transport = mock.Mock()
@@ -117,8 +115,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm = self._make_cm_with_mocks()
         mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
         mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
-        cm[self.addr] = mock_connection1
-        cm[(self.public_ip, self.port + 1)] = mock_connection2
+        cm[self.addr1] = mock_connection1
+        cm[self.addr2] = mock_connection2
 
         transport = mock.Mock()
         cm.makeConnection(transport)
