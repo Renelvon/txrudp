@@ -21,7 +21,13 @@ class ConnectionMultiplexer(
     Handles graceful shutdown of active connections.
     """
 
-    def __init__(self, connection_factory, public_ip, relaying=False):
+    def __init__(
+        self,
+        connection_factory,
+        public_ip,
+        relaying=False,
+        logger=None
+    ):
         """
         Initialize a new multiplexer.
 
@@ -35,12 +41,15 @@ class ConnectionMultiplexer(
                 packets that are not targeting this node (i.e. messages
                 that have a destination IP different than `public_ip`.)
                 If False, this node will drop such messages.
+            logger: A logging.Logger instance to dump invalid received
+                packets into; if None, dumping is disabled.
         """
         super(ConnectionMultiplexer, self).__init__()
         self.connection_factory = connection_factory
         self.public_ip = public_ip
         self.relaying = relaying
         self._active_connections = {}
+        self._logger = logger
 
     def makeConnection(self, transport):
         """
@@ -121,8 +130,12 @@ class ConnectionMultiplexer(
         try:
             json_obj = json.loads(datagram)
             rudp_packet = packet.RUDPPacket.from_unvalidated_json(json_obj)
-        except (ValueError, TypeError, jsonschema.ValidationError):
-            log.err()
+        except (ValueError, TypeError):
+            if self._logger is not None:
+                self._logger.info('Bad packet (bad JSON format): %s', datagram)
+        except jsonschema.ValidationError:
+            if self._logger is not None:
+                self._logger.info('Bad packet (invalid RUDP packet): %s', datagram)
         else:
             dest_addr = (rudp_packet.dest_ip, rudp_packet.dest_port)
             if dest_addr != self.public_ip:
