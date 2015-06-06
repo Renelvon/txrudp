@@ -37,10 +37,10 @@ class ConnectionMultiplexer(
                 If False, this node will drop such messages.
         """
         super(ConnectionMultiplexer, self).__init__()
+        self.connection_factory = connection_factory
         self.public_ip = public_ip
         self.relaying = relaying
         self._active_connections = {}
-        self._connection_factory = connection_factory
 
     def makeConnection(self, transport):
         """
@@ -151,7 +151,7 @@ class ConnectionMultiplexer(
         Returns:
             A new connection.RUDPConnection
         """
-        con = self._connection_factory.make_new_connection(
+        con = self.connection_factory.make_new_connection(
             self,
             own_addr,
             source_addr,

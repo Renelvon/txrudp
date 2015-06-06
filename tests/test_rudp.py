@@ -17,6 +17,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cls.port = 12345
         cls.addr1 = (cls.public_ip, cls.port)
         cls.addr2 = (cls.public_ip, cls.port + 1)
+        cls.addr3 = (cls.public_ip, cls.port + 2)
 
     def _make_cm_with_mocks(self):
         cf = mock.Mock(spec_set=connection.RUDPConnectionFactory)
@@ -91,6 +92,28 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm[self.addr1] = mock_connection1
         cm[self.addr2] = mock_connection2
         self.assertItemsEqual(iter(cm), (self.addr1, self.addr2))
+
+    def test_make_new_connection(self):
+        cm = self._make_cm_with_mocks()
+        con = cm.make_new_connection(self.addr1, self.addr2)
+        self.assertIn(self.addr2, cm)
+        cm.connection_factory.make_new_connection.assert_called_once_with(
+            cm,
+            self.addr1,
+            self.addr2,
+            None
+        )
+
+    def test_make_new_relaying_connection(self):
+        cm = self._make_cm_with_mocks()
+        con = cm.make_new_connection(self.addr1, self.addr2, self.addr3)
+        self.assertIn(self.addr2, cm)
+        cm.connection_factory.make_new_connection.assert_called_once_with(
+            cm,
+            self.addr1,
+            self.addr2,
+            self.addr3
+        )
 
     def test_send_datagram(self):
         transport = mock.Mock()
