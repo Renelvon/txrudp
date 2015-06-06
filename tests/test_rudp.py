@@ -48,12 +48,6 @@ class TestConnectionManagerAPI(unittest.TestCase):
         self.assertEqual(cm.public_ip, self.public_ip)
         self.assertTrue(cm.relaying)
 
-    def test_make_connection(self):
-        transport = proto_helpers.StringTransportWithDisconnection()
-        cm = self._make_cm()
-        cm.makeConnection(transport)
-        self.assertIs(cm.transport, transport)
-
     def test_get_nonexistent_connection(self):
         cm = self._make_cm()
         self.assertNotIn(self.addr1, cm)

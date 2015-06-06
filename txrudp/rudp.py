@@ -51,16 +51,6 @@ class ConnectionMultiplexer(
         self._active_connections = {}
         self._logger = logger
 
-    def makeConnection(self, transport):
-        """
-        Attach the protocol to the transport layer.
-
-        Args:
-            transport: A transport that is an instance of
-                twisted.internet.interfaces.IUDPTransport.
-        """
-        super(ConnectionMultiplexer, self).makeConnection(transport)
-
     def __len__(self):
         """Return the number of live connections."""
         return len(self._active_connections)
