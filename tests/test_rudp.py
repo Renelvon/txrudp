@@ -99,6 +99,30 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm[self.addr2] = mock_connection2
         self.assertItemsEqual(iter(cm), (self.addr1, self.addr2))
 
+    def test_receive_bad_json_datagram(self):
+        cm = self._make_cm()
+        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
+        cm[self.addr1] = mock_connection
+        datagram = '!@#4noise%^&*'
+        cm.datagramReceived(datagram, self.addr1)
+        mock_connection.receive_packet.assert_not_called()
+
+    def test_receive_bad_rudp_datagram(self):
+        cm = self._make_cm()
+        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
+        cm[self.addr1] = mock_connection
+        datagram = json.dumps(
+            packet.RUDPPacket(
+                -1,  # Bad sequence number
+                '123.45.67.89',
+                12345,
+                '132.54.76.98',
+                54321
+            ).to_json()
+        )
+        cm.datagramReceived(datagram, self.addr1)
+        mock_connection.receive_packet.assert_not_called()
+
     def test_make_new_connection(self):
         cm = self._make_cm()
         con = cm.make_new_connection(self.addr1, self.addr2)
