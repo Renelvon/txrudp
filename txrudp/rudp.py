@@ -143,7 +143,7 @@ class ConnectionMultiplexer(
                         source_addr,
                         addr
                     )
-                con.receive_packet(datagram)
+                con.receive_packet(rudp_packet)
 
     def make_new_connection(self, own_addr, source_addr, relay_addr=None):
         """
