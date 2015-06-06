@@ -139,7 +139,10 @@ class ConnectionMultiplexer(
         else:
             if rudp_packet.dest_ip != self.public_ip:
                 if self.relaying:
-                    self.transport.write(datagram, dest_addr)
+                    self.transport.write(
+                        datagram,
+                        (rudp_packet.dest_ip, rudp_packet.dest_port)
+                    )
             else:
                 source_addr = (rudp_packet.source_ip, rudp_packet.source_port)
                 con = self._active_connections.get(source_addr)
