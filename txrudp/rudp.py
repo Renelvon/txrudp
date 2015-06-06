@@ -137,8 +137,7 @@ class ConnectionMultiplexer(
             if self._logger is not None:
                 self._logger.info('Bad packet (invalid RUDP packet): %s', datagram)
         else:
-            dest_addr = (rudp_packet.dest_ip, rudp_packet.dest_port)
-            if dest_addr != self.public_ip:
+            if rudp_packet.dest_ip != self.public_ip:
                 if self.relaying:
                     self.transport.write(datagram, dest_addr)
             else:
