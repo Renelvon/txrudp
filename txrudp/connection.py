@@ -44,7 +44,7 @@ class RUDPConnection(object):
                 retries: Number of times this package has already
                     been sent, as an integer.
             """
-            self.packet = rudp_packet
+            self.rudp_packet = rudp_packet
             self.timeout = timeout
             self.timeout_cb = timeout_cb
             self.retries = retries
