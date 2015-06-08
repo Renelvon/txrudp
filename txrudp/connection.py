@@ -500,51 +500,6 @@ class RUDPConnection(object):
             self.handler.receive_message(payload)
 
 
-class RUDPConnectionFactory(object):
-
-    """
-    A factory for RUDPConnections.
-
-    Subclass according to need.
-    """
-
-    def __init__(self, handler_factory):
-        """
-        Create a new RUDPConnectionFactory.
-
-        Args:
-            handler_factory: An instance of a HandlerFactory,
-                providing a `make_new_handler` method.
-        """
-        self.handler_factory = handler_factory
-
-    def make_new_connection(
-        self,
-        proto_handle,
-        own_addr,
-        source_addr,
-        relay_addr
-    ):
-        """
-        Create a new RUDPConnection.
-
-        In addition, create a handler and attach the connection to it.
-        """
-        handler = self.handler_factory.make_new_handler(
-            own_addr,
-            source_addr,
-            relay_addr
-        )
-        connection = RUDPConnection(
-            proto_handle,
-            handler,
-            own_addr,
-            source_addr,
-            relay_addr
-        )
-        handler.connection = connection
-
-
 class Handler(object):
 
     """
@@ -588,3 +543,48 @@ class HandlerFactory(object):
     @abc.abstractmethod
     def make_new_handler(self, *args, **kwargs):
         """Create a new handler."""
+
+
+class RUDPConnectionFactory(object):
+
+    """
+    A factory for RUDPConnections.
+
+    Subclass according to need.
+    """
+
+    def __init__(self, handler_factory):
+        """
+        Create a new RUDPConnectionFactory.
+
+        Args:
+            handler_factory: An instance of a HandlerFactory,
+                providing a `make_new_handler` method.
+        """
+        self.handler_factory = handler_factory
+
+    def make_new_connection(
+        self,
+        proto_handle,
+        own_addr,
+        source_addr,
+        relay_addr
+    ):
+        """
+        Create a new RUDPConnection.
+
+        In addition, create a handler and attach the connection to it.
+        """
+        handler = self.handler_factory.make_new_handler(
+            own_addr,
+            source_addr,
+            relay_addr
+        )
+        connection = RUDPConnection(
+            proto_handle,
+            handler,
+            own_addr,
+            source_addr,
+            relay_addr
+        )
+        handler.connection = connection
