@@ -6,6 +6,7 @@ Classes:
     RUDPConnectionFactory: Creator of RUDPConnections.
 """
 
+import abc
 import collections
 import json
 import random
@@ -544,43 +545,46 @@ class RUDPConnectionFactory(object):
         handler.connection = connection
 
 
+class Handler(object):
+
+    """
+    Abstract base class for handler objects.
+
+    Each RUDPConnection should be linked to one such object.
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    connection = None
+
+    @abc.abstractmethod
+    def __init__(self, *args, **kwargs):
+        """Create a new Handler."""
+
+    @abc.abstractmethod
+    def receive_message(self, message):
+        """
+        Receive a message from the given connection.
+
+        Args:
+            message: The payload of an RUDPPacket, as a string.
+        """
+
+    @abc.abstractmethod
+    def handle_shutdown(self):
+        """Handle connection shutdown."""
+
+
 class HandlerFactory(object):
 
-    """
-    A factory for handlers.
+    """Abstract base class for handler factory."""
 
-    Subclass according to need.
-    """
+    __metaclass__ = abc.ABCMeta
 
-    class StubHandler(object):
-
-        """
-        A handler stub/interface.
-
-        Subclass according to need.
-        """
-
-        def __init__(self, own_addr, source_addr, relay_addr):
-            """Create a new StubHandler."""
-            self.connection = None
-            self.own_addr = own_addr
-            self.source_addr = source_addr
-            self.relay_addr = relay_addr
-
-        def receive_message(self, message, connection=None):
-            """Receive a message from the given connection."""
-            if connection is None:
-                connection = self.connection
-
-        def handle_shutdown(self, connection=None):
-            """Handle conenction shutdown."""
-            if connection is None:
-                connection = self.connection
-
-    def __init__(self):
+    @abc.abstractmethod
+    def __init__(self, *args, **kwargs):
         """Create a new HandlerFactory."""
-        return
 
-    def make_new_handler(self, own_addr, source_addr, relay_addr):
+    @abc.abstractmethod
+    def make_new_handler(self, *args, **kwargs):
         """Create a new handler."""
-        return self.StubHandler(own_addr, source_addr, relay_addr)
