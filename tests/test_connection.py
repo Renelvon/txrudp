@@ -1,7 +1,7 @@
 import collections
 
 import mock
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.trial import unittest
 
 from txrudp import connection, packet, rudp
@@ -59,6 +59,9 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.clock = task.Clock()
+        connection.REACTOR.callLater = cls.clock.callLater
+
         cls.public_ip = '123.45.67.89'
         cls.port = 12345
         cls.own_addr = (cls.public_ip, cls.port)
@@ -83,6 +86,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(con.relay_addr, self.addr1)
         self.assertFalse(con.connected)
 
+        self.clock.advance(0)
         self.addCleanup(con.shutdown)
 
     def test_init_with_relay(self):
@@ -100,4 +104,5 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(con.relay_addr, self.addr2)
         self.assertFalse(con.connected)
 
+        self.clock.advance(0)
         self.addCleanup(con.shutdown)
