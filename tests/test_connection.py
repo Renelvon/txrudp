@@ -81,8 +81,9 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(con.own_addr, self.own_addr)
         self.assertEqual(con.dest_addr, self.addr1)
         self.assertEqual(con.relay_addr, self.addr1)
-
         self.assertFalse(con.connected)
+
+        self.addCleanup(con.shutdown)
 
     def test_init_with_relay(self):
         con = connection.RUDPConnection(
@@ -97,5 +98,6 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(con.own_addr, self.own_addr)
         self.assertEqual(con.dest_addr, self.addr1)
         self.assertEqual(con.relay_addr, self.addr2)
-
         self.assertFalse(con.connected)
+
+        self.addCleanup(con.shutdown)
