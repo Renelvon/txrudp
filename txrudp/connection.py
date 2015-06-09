@@ -373,8 +373,6 @@ class RUDPConnection(object):
             self.shutdown()
         else:
             self._proto.send_datagram(sch_packet.rudp_packet, self.relay_addr)
-            if sch_packet.timeout_cb.active():
-                sch_packet.timeout_cb.cancel()
             sch_packet.timeout_cb = REACTOR.callLater(
                 sch_packet.timeout,
                 self._do_send_packet,
