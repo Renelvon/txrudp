@@ -16,6 +16,9 @@ from twisted.internet import reactor, task
 from txrudp import constants, heap, packet
 
 
+REACTOR = reactor
+
+
 class RUDPConnection(object):
 
     """
@@ -92,7 +95,7 @@ class RUDPConnection(object):
         self._looping_receive = task.LoopingCall(self._pop_received_packet)
 
         # Initiate SYN sequence after receiving any pending SYN message.
-        reactor.callLater(0, self._send_syn)
+        REACTOR.callLater(0, self._send_syn)
 
     def send_message(self, message):
         """
@@ -293,7 +296,7 @@ class RUDPConnection(object):
             timeout: The timeout for this packet type.
         """
         final_packet = self._finalize_packet(rudp_packet)
-        timeout_cb = reactor.callLater(
+        timeout_cb = REACTOR.callLater(
             0,
             self._do_send_packet,
             rudp_packet.sequence_number
@@ -371,7 +374,7 @@ class RUDPConnection(object):
         else:
             self._proto.send_datagram(sch_packet.rudp_packet, self.relay_addr)
             sch_packet.timeout_cb.cancel()
-            sch_packet.timeout_cb = reactor.callLater(
+            sch_packet.timeout_cb = REACTOR.callLater(
                 sch_packet.timeout,
                 self._do_send_packet,
                 seqnum
