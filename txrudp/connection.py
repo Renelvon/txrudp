@@ -390,9 +390,10 @@ class RUDPConnection(object):
         Args:
             timeout: Seconds until a bare ACK packet is sent.
         """
-        self._looping_ack.stop()
-        if self.connected:
-            self._looping_ack.start(timeout)
+        if self._looping_ack.running:
+            self._looping_ack.stop()
+            if self.connected:
+                self._looping_ack.start(timeout)
 
     def _clear_sending_window(self):
         """
