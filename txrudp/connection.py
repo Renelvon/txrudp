@@ -223,7 +223,7 @@ class RUDPConnection(object):
             ack=self._next_expected_seqnum,
             syn=True
         )
-        self._schedule_send_in_order(syn_packet, constants.SYN_TIMEOUT)
+        self._schedule_send_in_order(syn_packet, constants.PACKET_TIMEOUT)
 
     def _send_ack(self):
         """
