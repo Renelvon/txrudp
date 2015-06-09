@@ -153,7 +153,7 @@ class RUDPConnection(object):
             self._looping_send.stop()
         if self._looping_receive.running:
             self._looping_receive.stop()
-        self._clear_send_window()
+        self._clear_sending_window()
         self.handler.handle_shutdown()
 
     @staticmethod
@@ -181,7 +181,7 @@ class RUDPConnection(object):
         if (
             self.connected and
             not self._looping_send.running and
-            len(self._send_window) < constants.WINDOW_SIZE and
+            len(self._sending_window) < constants.WINDOW_SIZE and
             len(self._packet_queue)
         ):
             self._looping_send.start(0)
@@ -192,7 +192,7 @@ class RUDPConnection(object):
         """
         if (
             self._looping_send.running and (
-                len(self._send_window) >= constants.WINDOW_SIZE or
+                len(self._sending_window) >= constants.WINDOW_SIZE or
                 not len(self._packet_queue)
             )
         ):
@@ -292,13 +292,13 @@ class RUDPConnection(object):
             rudp_packet: The packet.RUDPPacket to be sent.
             timeout: The timeout for this packet type.
         """
-        final_packet = self._finalize_packet(packet)
-        timeout_cb = reactor.CallLater(
+        final_packet = self._finalize_packet(rudp_packet)
+        timeout_cb = reactor.callLater(
             0,
             self._do_send_packet,
             rudp_packet.sequence_number
         )
-        self._send_window[rudp_packet.sequence_number] = self.ScheduledPacket(
+        self._sending_window[rudp_packet.sequence_number] = self.ScheduledPacket(
             final_packet,
             timeout,
             timeout_cb,
@@ -365,11 +365,11 @@ class RUDPConnection(object):
             KeyError: No such packet exists in the send window; some
                 invariant has been violated.
         """
-        sch_packet = self._send_window[seqnum]
+        sch_packet = self._sending_window[seqnum]
         if sch_packet.retries >= constants.MAX_RETRANSMISSIONS:
             self.shutdown()
         else:
-            self._proto.send_datagram(sch_packet.packet, self.relay_addr)
+            self._proto.send_datagram(sch_packet.rudp_packet, self.relay_addr)
             sch_packet.timeout_cb.cancel()
             sch_packet.timeout_cb = reactor.callLater(
                 sch_packet.timeout,
@@ -390,15 +390,15 @@ class RUDPConnection(object):
         if self.connected:
             self._looping_ack.start(timeout)
 
-    def _clear_send_window(self):
+    def _clear_sending_window(self):
         """
         Purge send window from scheduled packets.
 
         Cancel all retransmission timers.
         """
-        for sch_packet in self._send_window.values():
+        for sch_packet in self._sending_window.values():
             sch_packet.timeout_cb.cancel()
-        self._send_window.clear()
+        self._sending_window.clear()
 
     def _process_casual_packet(self, rudp_packet):
         """
@@ -410,7 +410,7 @@ class RUDPConnection(object):
         Args:
             rudp_packet: A packet.RUDPPacket with FIN flag unset.
         """
-        if rudp_packet.ack > 0 and self._send_window:
+        if rudp_packet.ack > 0 and self._sending_window:
             self._retire_packets_with_seqnum_up_to(rudp_packet.ack)
 
         if rudp_packet.sequence_number > 0:
@@ -453,14 +453,14 @@ class RUDPConnection(object):
             # Prevent crash if malicious node initiates connection
             # with SYNACK message.
             if (
-                self._send_window and
-                rudp_packet.ack == self._send_window[0].sequence_number + 1
+                self._sending_window and
+                rudp_packet.ack == self._sending_window[0].sequence_number + 1
             ):
                 self._retire_packets_with_acknum_up_to(rudp_packet.ack)
                 self.connected = True
         else:
             self._next_expected_seqnum = rudp_packet.sequence_number + 1
-            self._clear_send_window()
+            self._clear_sending_window()
             self._send_syn()
             self.connected = True
 
@@ -473,9 +473,9 @@ class RUDPConnection(object):
                 outbound packet.
         """
         acknum = min(acknum, self._next_sequence_number)
-        lowest_seqnum = self._send_window[0].sequence_number
+        lowest_seqnum = self._sending_window[0].sequence_number
         for seqnum in range(lowest_seqnum, acknum):
-            sch_packet = self._send_window.pop(seqnum)
+            sch_packet = self._sending_window.pop(seqnum)
             sch_packet.timeout_cb.cancel()
 
         if lowest_seqnum < acknum:
