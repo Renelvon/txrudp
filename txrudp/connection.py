@@ -72,7 +72,7 @@ class RUDPConnection(object):
         if relay_addr is None:
             self.relay_addr = dest_addr
         else:
-            self.relay_addr = self.Address(*dest_addr)
+            self.relay_addr = self.Address(*relay_addr)
 
         self.connected = False
 
