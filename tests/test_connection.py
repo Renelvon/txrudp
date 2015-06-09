@@ -1,14 +1,13 @@
 import collections
-import unittest
 
 import mock
 from twisted.internet import reactor
-from twisted.trial import unittest as trialtest
+from twisted.trial import unittest
 
 from txrudp import connection, packet, rudp
 
 
-class TestScheduledPacketAPI(trialtest.TestCase):
+class TestScheduledPacketAPI(unittest.TestCase):
 
     """Test API (attributes) of ScheduledPacket subclass."""
 
