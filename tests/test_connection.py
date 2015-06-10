@@ -1,10 +1,11 @@
 import collections
+import json
 
 import mock
 from twisted.internet import reactor, task
 from twisted.trial import unittest
 
-from txrudp import connection, packet, rudp
+from txrudp import connection, constants, packet, rudp
 
 
 class TestScheduledPacketAPI(unittest.TestCase):
@@ -105,4 +106,60 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertFalse(con.connected)
 
         self.clock.advance(0)
+        self.addCleanup(con.shutdown)
+
+    def test_syn_repeat(self):
+        con = connection.RUDPConnection(
+            self.proto_mock,
+            self.handler_mock,
+            self.own_addr,
+            self.addr1
+        )
+
+        for _ in range(constants.MAX_RETRANSMISSIONS):
+            # Each advance forces a SYN packet retransmission.
+            self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Force transmission of FIN packet and shutdown.
+        self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Trap any calls after shutdown.
+        self.clock.advance(100 * constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
+
+        first_syn_call = m_calls[0]
+        syn_packet = json.loads(first_syn_call[0][0])
+        address = first_syn_call[0][1]
+
+        self.assertEqual(address, con.relay_addr)
+        self.assertGreater(syn_packet['sequence_number'], 0)
+        self.assertLess(syn_packet['sequence_number'], 2**16)
+
+        expected_syn_packet = packet.RUDPPacket(
+            syn_packet['sequence_number'],
+            con.dest_addr[0],
+            con.dest_addr[1],
+            con.own_addr[0],
+            con.own_addr[1],
+            syn=True
+        ).to_json()
+
+        for call in m_calls[:-1]:
+            self.assertEqual(json.loads(call[0][0]), expected_syn_packet)
+            self.assertEqual(call[0][1], address)
+
+        expected_fin_packet = packet.RUDPPacket(
+            0,
+            con.dest_addr[0],
+            con.dest_addr[1],
+            con.own_addr[0],
+            con.own_addr[1],
+            fin=True
+        ).to_json()
+
+        self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
+        self.assertEqual(m_calls[-1][0][1], address)
         self.addCleanup(con.shutdown)

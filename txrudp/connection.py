@@ -285,7 +285,7 @@ class RUDPConnection(object):
             rudp_packet: The packet.RUDPPacket to be sent.
         """
         final_packet = self._finalize_packet(rudp_packet)
-        self._proto.send_datagram(final_packet)
+        self._proto.send_datagram(final_packet, self.relay_addr)
 
     def _schedule_send_in_order(self, rudp_packet, timeout):
         """
