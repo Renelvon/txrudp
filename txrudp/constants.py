@@ -20,4 +20,4 @@ MAX_PACKET_DELAY = 20
 
 # If a packet is retransmitted more than that many times,
 # the connection should be considered broken.
-MAX_RETRANSMISSIONS = MAX_PACKET_DELAY // PACKET_TIMEOUT
+MAX_RETRANSMISSIONS = int(MAX_PACKET_DELAY // PACKET_TIMEOUT)
