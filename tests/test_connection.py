@@ -72,23 +72,24 @@ class TestRUDPConnectionAPI(unittest.TestCase):
     def setUp(self):
         self.proto_mock = mock.Mock(spec_set=rudp.ConnectionMultiplexer)
         self.handler_mock = mock.Mock(spec_set=connection.Handler)
-
-    def test_default_init(self):
-        con = connection.RUDPConnection(
+        self.con = connection.RUDPConnection(
             self.proto_mock,
             self.handler_mock,
             self.own_addr,
             self.addr1
         )
 
-        self.assertEqual(con.handler, self.handler_mock)
-        self.assertEqual(con.own_addr, self.own_addr)
-        self.assertEqual(con.dest_addr, self.addr1)
-        self.assertEqual(con.relay_addr, self.addr1)
-        self.assertFalse(con.connected)
+    def tearDown(self):
+        self.con.shutdown()
+
+    def test_default_init(self):
+        self.assertEqual(self.con.handler, self.handler_mock)
+        self.assertEqual(self.con.own_addr, self.own_addr)
+        self.assertEqual(self.con.dest_addr, self.addr1)
+        self.assertEqual(self.con.relay_addr, self.addr1)
+        self.assertFalse(self.con.connected)
 
         self.clock.advance(0)
-        self.addCleanup(con.shutdown)
 
     def test_init_with_relay(self):
         con = connection.RUDPConnection(
@@ -106,16 +107,9 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertFalse(con.connected)
 
         self.clock.advance(0)
-        self.addCleanup(con.shutdown)
+        con.shutdown()
 
     def test_syn_repeat(self):
-        con = connection.RUDPConnection(
-            self.proto_mock,
-            self.handler_mock,
-            self.own_addr,
-            self.addr1
-        )
-
         for _ in range(constants.MAX_RETRANSMISSIONS):
             # Each advance forces a SYN packet retransmission.
             self.clock.advance(constants.PACKET_TIMEOUT)
@@ -134,16 +128,16 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         syn_packet = json.loads(first_syn_call[0][0])
         address = first_syn_call[0][1]
 
-        self.assertEqual(address, con.relay_addr)
+        self.assertEqual(address, self.con.relay_addr)
         self.assertGreater(syn_packet['sequence_number'], 0)
         self.assertLess(syn_packet['sequence_number'], 2**16)
 
         expected_syn_packet = packet.RUDPPacket(
             syn_packet['sequence_number'],
-            con.dest_addr[0],
-            con.dest_addr[1],
-            con.own_addr[0],
-            con.own_addr[1],
+            self.con.dest_addr[0],
+            self.con.dest_addr[1],
+            self.con.own_addr[0],
+            self.con.own_addr[1],
             syn=True
         ).to_json()
 
@@ -153,13 +147,12 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         expected_fin_packet = packet.RUDPPacket(
             0,
-            con.dest_addr[0],
-            con.dest_addr[1],
-            con.own_addr[0],
-            con.own_addr[1],
+            self.con.dest_addr[0],
+            self.con.dest_addr[1],
+            self.con.own_addr[0],
+            self.con.own_addr[1],
             fin=True
         ).to_json()
 
         self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
         self.assertEqual(m_calls[-1][0][1], address)
-        self.addCleanup(con.shutdown)
