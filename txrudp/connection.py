@@ -128,10 +128,11 @@ class RUDPConnection(object):
                 that the packet had already been validated against
                 packet.RUDP_PACKET_JSON_SCHEMA.
         """
-        if rudp_packet.fin:
-            self.shutdown()
-        elif self.connected:
-            self._process_casual_packet(rudp_packet)
+        if self.connected:
+            if rudp_packet.fin:
+                self.shutdown()
+            else:
+                self._process_casual_packet(rudp_packet)
         elif rudp_packet.syn:
             self._process_syn_packet(rudp_packet)
 

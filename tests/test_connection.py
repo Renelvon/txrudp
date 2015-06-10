@@ -148,3 +148,19 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
         self.assertEqual(m_calls[-1][0][1], address)
+
+    def test_receive_fin_packet_while_disconnected(self):
+        fin_rudp_packet = packet.RUDPPacket(
+            0,
+            self.own_addr,
+            self.addr1,
+            fin=True
+        )
+
+        self.proto_mock.reset_mock()
+        self.handler_mock.reset_mock()
+
+        self.con.receive_packet(fin_rudp_packet)
+        connection.REACTOR.runUntilCurrent()
+
+        self.handler_mock.handle_shutdown.assert_not_called()
