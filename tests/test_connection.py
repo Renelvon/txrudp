@@ -157,9 +157,6 @@ class TestRUDPConnectionAPI(unittest.TestCase):
             fin=True
         )
 
-        self.proto_mock.reset_mock()
-        self.handler_mock.reset_mock()
-
         self.con.receive_packet(fin_rudp_packet)
         connection.REACTOR.runUntilCurrent()
 
