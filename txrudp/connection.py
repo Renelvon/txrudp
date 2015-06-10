@@ -400,7 +400,8 @@ class RUDPConnection(object):
         Cancel all retransmission timers.
         """
         for sch_packet in self._sending_window.values():
-            sch_packet.timeout_cb.cancel()
+            if sch_packet.timeout_cb.active():
+                sch_packet.timeout_cb.cancel()
         self._sending_window.clear()
 
     def _process_casual_packet(self, rudp_packet):
