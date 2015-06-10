@@ -132,19 +132,15 @@ class ConnectionMultiplexer(
             if self._logger is not None:
                 self._logger.info('Bad packet (invalid RUDP packet): %s', datagram)
         else:
-            if rudp_packet.dest_ip != self.public_ip:
+            if rudp_packet.dest_addr[0] != self.public_ip:
                 if self.relaying:
-                    self.transport.write(
-                        datagram,
-                        (rudp_packet.dest_ip, rudp_packet.dest_port)
-                    )
+                    self.transport.write(datagram, rudp_packet.dest_addr)
             else:
-                source_addr = (rudp_packet.source_ip, rudp_packet.source_port)
-                con = self._active_connections.get(source_addr)
+                con = self._active_connections.get(rudp_packet.source_addr)
                 if con is None:
                     con = self.make_new_connection(
                         (self.public_ip, self.port),
-                        source_addr,
+                        rudp_packet.source_addr,
                         addr
                     )
                 con.receive_packet(rudp_packet)

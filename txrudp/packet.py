@@ -95,10 +95,8 @@ class RUDPPacket(object):
     def __init__(
         self,
         sequence_number,
-        dest_ip,
-        dest_port,
-        source_ip,
-        source_port,
+        dest_addr,
+        source_addr,
         payload='',
         more_fragments=0,
         ack=0,
@@ -110,10 +108,8 @@ class RUDPPacket(object):
 
         Args:
             seqnum: The packet's sequence number, as an int.
-            dest_ip: The destination IPv4/IPv6, as a string.
-            dest_port: The destination port, as an integer.
-            source_ip: The source IPv4/IPv6, as a string.
-            source_port: The source port, as an integer.
+            dest_addr: Tuple of destination addres (ip, port).
+            source_addr: Tuple of local host addres (ip, port).
             payload: The packet's payload, as a string.
             more_fragments: The number of segments that follow this
                 packet and are delivering remaining parts of the same
@@ -129,10 +125,8 @@ class RUDPPacket(object):
         a mediator node relaying packet (e.g. for NAT punching).
         """
         self.sequence_number = sequence_number
-        self.dest_ip = dest_ip
-        self.dest_port = dest_port
-        self.source_ip = source_ip
-        self.source_port = source_port
+        self.dest_addr = dest_addr
+        self.source_addr = source_addr
         self.payload = payload
         self.more_fragments = more_fragments
         self.ack = ack
@@ -161,10 +155,10 @@ class RUDPPacket(object):
         """
         return {
             'sequence_number': self.sequence_number,
-            'dest_ip': self.dest_ip,
-            'dest_port': self.dest_port,
-            'source_ip': self.source_ip,
-            'source_port': self.source_port,
+            'dest_ip': self.dest_addr[0],
+            'dest_port': self.dest_addr[1],
+            'source_ip': self.source_addr[0],
+            'source_port': self.source_addr[1],
             'payload': self.payload,
             'more_fragments': self.more_fragments,
             'ack': self.ack,
@@ -201,10 +195,8 @@ class RUDPPacket(object):
             An RUDPMesssage instance representing the same packet.
         """
         sequence_number = int(json_obj['sequence_number'])
-        dest_ip = json_obj['dest_ip']
-        dest_port = int(json_obj['dest_port'])
-        source_ip = json_obj['source_ip']
-        source_port = int(json_obj['source_port'])
+        dest_addr = (json_obj['dest_ip'], int(json_obj['dest_port']))
+        source_addr = (json_obj['source_ip'], int(json_obj['source_port']))
         payload = json_obj['payload']
         more_fragments = json_obj['more_fragments']
         ack = int(json_obj['ack'])
@@ -213,10 +205,8 @@ class RUDPPacket(object):
 
         return cls(
             sequence_number,
-            dest_ip,
-            dest_port,
-            source_ip,
-            source_port,
+            dest_addr,
+            source_addr,
             payload,
             more_fragments,
             ack,

@@ -109,10 +109,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         datagram = json.dumps(
             packet.RUDPPacket(
                 -1,  # Bad sequence number
-                '123.45.67.89',
-                12345,
-                '132.54.76.98',
-                54321
+                ('123.45.67.89', 12345),
+                ('132.54.76.98', 54321)
             ).to_json()
         )
         cm.datagramReceived(datagram, self.addr1)
@@ -132,13 +130,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
         source_addr = self.addr1
         datagram = json.dumps(
-            packet.RUDPPacket(
-                1,
-                dest_ip,
-                12345,
-                source_addr[0],
-                source_addr[1]
-            ).to_json()
+            packet.RUDPPacket(1, (dest_ip, 12345), source_addr).to_json()
         )
 
         cm.datagramReceived(datagram, source_addr)
@@ -153,13 +145,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
         source_addr = self.addr1
         datagram = json.dumps(
-            packet.RUDPPacket(
-                1,
-                dest_ip,
-                12345,
-                source_addr[0],
-                source_addr[1]
-            ).to_json()
+            packet.RUDPPacket(1, (dest_ip, 12345), source_addr).to_json()
         )
 
         cm.datagramReceived(datagram, source_addr)
@@ -178,10 +164,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm[source_addr] = mock_connection
         rudp_packet = packet.RUDPPacket(
             1,
-            self.public_ip,
-            self.port,
-            source_addr[0],
-            source_addr[1]
+            (self.public_ip, self.port),
+            source_addr
         )
         datagram = json.dumps(rudp_packet.to_json())
 
@@ -195,10 +179,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         source_addr = self.addr3
         rudp_packet = packet.RUDPPacket(
             1,
-            self.public_ip,
-            self.port,
-            source_addr[0],
-            source_addr[1]
+            (self.public_ip, self.port),
+            source_addr
         )
         datagram = json.dumps(rudp_packet.to_json())
 
@@ -220,10 +202,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         relay_addr = self.addr3
         rudp_packet = packet.RUDPPacket(
             1,
-            self.public_ip,
-            self.port,
-            source_addr[0],
-            source_addr[1]
+            (self.public_ip, self.port),
+            source_addr
         )
         datagram = json.dumps(rudp_packet.to_json())
 
@@ -266,10 +246,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm.makeConnection(transport)
         rudp_packet = packet.RUDPPacket(
             1,
-            '132.54.76.98',
-            23456,
-            self.public_ip,
-            self.port
+            ('132.54.76.98', 23456),
+            (self.public_ip, self.port)
         )
         datagram = json.dumps(rudp_packet.to_json())
 

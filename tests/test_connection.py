@@ -19,10 +19,8 @@ class TestScheduledPacketAPI(unittest.TestCase):
     def test_default_init(self):
         rudp_packet = packet.RUDPPacket(
             1,
-            '123.45.67.89',
-            12345,
-            '213.54.76.98',
-            54321
+            ('123.45.67.89', 12345),
+            ('213.54.76.98', 54321)
         )
         timeout = 0.7
         timeout_cb = reactor.callLater(timeout, lambda: None)
@@ -39,10 +37,8 @@ class TestScheduledPacketAPI(unittest.TestCase):
     def test_init_with_retries(self):
         rudp_packet = packet.RUDPPacket(
             1,
-            '123.45.67.89',
-            12345,
-            '213.54.76.98',
-            54321
+            ('123.45.67.89', 12345),
+            ('213.54.76.98', 54321)
         )
         timeout = 0.7
         timeout_cb = reactor.callLater(timeout, lambda: None)
@@ -134,10 +130,8 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         expected_syn_packet = packet.RUDPPacket(
             syn_packet['sequence_number'],
-            self.con.dest_addr[0],
-            self.con.dest_addr[1],
-            self.con.own_addr[0],
-            self.con.own_addr[1],
+            self.con.dest_addr,
+            self.con.own_addr,
             syn=True
         ).to_json()
 
@@ -147,10 +141,8 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         expected_fin_packet = packet.RUDPPacket(
             0,
-            self.con.dest_addr[0],
-            self.con.dest_addr[1],
-            self.con.own_addr[0],
-            self.con.own_addr[1],
+            self.con.dest_addr,
+            self.con.own_addr,
             fin=True
         ).to_json()
 

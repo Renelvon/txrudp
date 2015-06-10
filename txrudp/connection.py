@@ -219,10 +219,8 @@ class RUDPConnection(object):
         """
         syn_packet = packet.RUDPPacket(
             self._next_sequence_number,
-            self.dest_addr.ip,
-            self.dest_addr.port,
-            self.own_addr.ip,
-            self.own_addr.port,
+            self.dest_addr,
+            self.own_addr,
             ack=self._next_expected_seqnum,
             syn=True
         )
@@ -240,10 +238,8 @@ class RUDPConnection(object):
         """
         ack_packet = packet.RUDPPacket(
             0,
-            self.dest_addr.ip,
-            self.dest_addr.port,
-            self.own_addr.ip,
-            self.own_addr.port,
+            self.dest_addr,
+            self.own_addr,
             ack=self._next_expected_seqnum
         )
         self._schedule_send_out_of_order(ack_packet)
@@ -266,10 +262,8 @@ class RUDPConnection(object):
         """
         fin_packet = packet.RUDPPacket(
             0,
-            self.dest_addr.ip,
-            self.dest_addr.port,
-            self.own_addr.ip,
-            self.own_addr.port,
+            self.dest_addr,
+            self.own_addr,
             ack=self._next_expected_seqnum,
             fin=True
         )
@@ -319,10 +313,8 @@ class RUDPConnection(object):
 
         rudp_packet = packet.RUDPPacket(
             self._get_next_sequence_number(),
-            self.dest_addr.ip,
-            self.dest_addr.port,
-            self.own_addr.ip,
-            self.own_addr.port,
+            self.dest_addr,
+            self.own_addr,
             message,
             more_fragments,
             ack=self._next_expected_seqnum

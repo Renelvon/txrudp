@@ -9,14 +9,14 @@ class TestPacketAPI(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        cls.dest_ip, cls.dest_port = '123.45.67.89', 12345
-        cls.source_ip, cls.source_port = '132.45.67.89', 54321
+        cls.dest_addr = ('123.45.67.89', 12345)
+        cls.source_addr = ('132.45.67.89', 54321)
         cls.json_dict = {
             'sequence_number': 1,
-            'dest_ip': cls.dest_ip,
-            'dest_port': cls.dest_port,
-            'source_ip': cls.source_ip,
-            'source_port': cls.source_port,
+            'dest_ip': cls.dest_addr[0],
+            'dest_port': cls.dest_addr[1],
+            'source_ip': cls.source_addr[0],
+            'source_port': cls.source_addr[1],
             'payload': 'Yellow submarine',
             'more_fragments': 4,
             'ack': 28,
@@ -25,18 +25,10 @@ class TestPacketAPI(unittest.TestCase):
         }
 
     def test_init_with_minimal_parametres(self):
-        p = packet.RUDPPacket(
-            1,
-            self.dest_ip,
-            self.dest_port,
-            self.source_ip,
-            self.source_port,
-        )
+        p = packet.RUDPPacket(1, self.dest_addr, self.source_addr)
         self.assertEqual(p.sequence_number, 1)
-        self.assertEqual(p.dest_ip, self.dest_ip)
-        self.assertEqual(p.dest_port, self.dest_port)
-        self.assertEqual(p.source_ip, self.source_ip)
-        self.assertEqual(p.source_port, self.source_port)
+        self.assertEqual(p.dest_addr, self.dest_addr)
+        self.assertEqual(p.source_addr, self.source_addr)
         self.assertEqual(p.payload, '')
         self.assertEqual(p.more_fragments, 0)
         self.assertEqual(p.ack, 0)
@@ -46,10 +38,8 @@ class TestPacketAPI(unittest.TestCase):
     def test_init_with_all_parametres(self):
         p = packet.RUDPPacket(
             sequence_number=1,
-            dest_ip=self.dest_ip,
-            dest_port=self.dest_port,
-            source_ip=self.source_ip,
-            source_port=self.source_port,
+            dest_addr=self.dest_addr,
+            source_addr=self.source_addr,
             payload='Yellow submarine',
             more_fragments=4,
             ack=28,
@@ -57,10 +47,8 @@ class TestPacketAPI(unittest.TestCase):
             syn=True
         )
         self.assertEqual(p.sequence_number, 1)
-        self.assertEqual(p.dest_ip, self.dest_ip)
-        self.assertEqual(p.dest_port, self.dest_port)
-        self.assertEqual(p.source_ip, self.source_ip)
-        self.assertEqual(p.source_port, self.source_port)
+        self.assertEqual(p.dest_addr, self.dest_addr)
+        self.assertEqual(p.source_addr, self.source_addr)
         self.assertEqual(p.payload, 'Yellow submarine')
         self.assertEqual(p.more_fragments, 4)
         self.assertEqual(p.ack, 28)
@@ -68,13 +56,7 @@ class TestPacketAPI(unittest.TestCase):
         self.assertTrue(p.syn)
 
     def _make_packet_with_seqnum(self, seqnum):
-        return packet.RUDPPacket(
-            seqnum,
-            self.dest_ip,
-            self.dest_port,
-            self.source_ip,
-            self.source_port,
-        )
+        return packet.RUDPPacket(seqnum, self.dest_addr, self.source_addr)
 
     def test_ordering(self):
         p1 = self._make_packet_with_seqnum(1)
@@ -94,10 +76,10 @@ class TestPacketAPI(unittest.TestCase):
 
     def _assert_packet_equals_json(self, p, json_obj):
         self.assertEqual(p.sequence_number, json_obj['sequence_number'])
-        self.assertEqual(p.dest_ip, json_obj['dest_ip'])
-        self.assertEqual(p.dest_port, json_obj['dest_port'])
-        self.assertEqual(p.source_ip, json_obj['source_ip'])
-        self.assertEqual(p.source_port, json_obj['source_port'])
+        self.assertEqual(p.dest_addr[0], json_obj['dest_ip'])
+        self.assertEqual(p.dest_addr[1], json_obj['dest_port'])
+        self.assertEqual(p.source_addr[0], json_obj['source_ip'])
+        self.assertEqual(p.source_addr[1], json_obj['source_port'])
         self.assertEqual(p.payload, json_obj['payload'])
         self.assertEqual(p.more_fragments, json_obj['more_fragments'])
         self.assertEqual(p.ack, json_obj['ack'])
@@ -107,10 +89,8 @@ class TestPacketAPI(unittest.TestCase):
     def test_to_json(self):
         p = packet.RUDPPacket(
             sequence_number=1,
-            dest_ip=self.dest_ip,
-            dest_port=self.dest_port,
-            source_ip=self.source_ip,
-            source_port=self.source_port,
+            dest_addr=self.dest_addr,
+            source_addr=self.source_addr,
             payload='Yellow submarine',
             more_fragments=4,
             ack=28,
