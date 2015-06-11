@@ -95,7 +95,7 @@ class RUDPConnection(object):
         self._looping_receive = task.LoopingCall(self._pop_received_packet)
 
         # Initiate SYN sequence after receiving any pending SYN message.
-        REACTOR.callLater(0, self._send_syn)
+        self._syn_handle = REACTOR.callLater(0, self._send_syn)
 
     def send_message(self, message):
         """
@@ -458,7 +458,8 @@ class RUDPConnection(object):
         else:
             self._next_expected_seqnum = rudp_packet.sequence_number + 1
             self._clear_sending_window()
-            self._send_syn()
+            if not self._syn_handle.active():
+                self._send_syn()
             self.connected = True
 
     def _retire_packets_with_seqnum_up_to(self, acknum):
