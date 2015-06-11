@@ -296,19 +296,6 @@ class TestRUDPConnectionAPI(unittest.TestCase):
     def test_receive_normal_during_connecting(self):
         self._initial_to_connecting()
 
-        remote_normal_packet = packet.RUDPPacket(
-            42,
-            self.con.own_addr,
-            self.con.dest_addr,
-            ack=2**15
-        )
-
-        self.con.receive_packet(remote_normal_packet)
-        self.clock.advance(0)
-        connection.REACTOR.runUntilCurrent()
-
-        self.assertFalse(self.con.connected)
-        self.handler_mock.receive_message.assert_not_called()
 
     # == Test HALF_CONNECTED state ==
     # == Test CONNECTED state ==
