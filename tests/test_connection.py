@@ -105,7 +105,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         con.shutdown()
 
-    def test_syn_repeat(self):
+    def test_send_syn_upon_initialization(self):
         for _ in range(constants.MAX_RETRANSMISSIONS):
             # Each advance forces a SYN packet retransmission.
             self.clock.advance(constants.PACKET_TIMEOUT)
