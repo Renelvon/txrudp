@@ -260,6 +260,38 @@ class TestRUDPConnectionAPI(unittest.TestCase):
     def test_receive_fin_during_connecting(self):
         self._initial_to_connecting()
 
+        remote_fin_packet = packet.RUDPPacket(
+            0,
+            self.con.own_addr,
+            self.con.dest_addr,
+            fin=True
+        )
+        self.proto_mock.reset_mock()
+        self.con.receive_packet(remote_fin_packet)
+
+        # Trap any calls after shutdown.
+        self.clock.advance(100 * constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        self.handler_mock.handle_shutdown.assert_called_once_with()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), 1)
+
+        fin_call = m_calls[0]
+        self.assertEqual(fin_call[0][1], self.con.relay_addr)
+
+        local_fin_packet = json.loads(fin_call[0][0])
+        expected_fin_packet = packet.RUDPPacket(
+            0,
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=local_fin_packet['ack'],
+            fin=True,
+        ).to_json()
+
+        self.assertEqual(local_fin_packet, expected_fin_packet)
+
     def test_receive_normal_during_connecting(self):
         self._initial_to_connecting()
 
