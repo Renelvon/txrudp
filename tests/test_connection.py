@@ -206,6 +206,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
     # == Test CONNECTING state ==
 
     def _initial_to_connecting(self):
+        self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
     def test_send_syn_during_connecting(self):
