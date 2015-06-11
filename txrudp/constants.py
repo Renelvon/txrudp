@@ -1,10 +1,10 @@
 """Constants governing operation of txrudp package."""
 
 # [bytes]
-UDP_SAFE_PACKET_SIZE = 1000
+UDP_SAFE_SEGMENT_SIZE = 1000
 
 # [length]
-WINDOW_SIZE = 65535 // UDP_SAFE_PACKET_SIZE
+WINDOW_SIZE = 65535 // UDP_SAFE_SEGMENT_SIZE
 
 # [seconds]
 PACKET_TIMEOUT = 0.7
