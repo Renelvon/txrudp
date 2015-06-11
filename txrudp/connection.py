@@ -29,7 +29,7 @@ class RUDPConnection(object):
     packets via other connections, to help with NAT traversal.
     """
 
-    Address = collections.namedtuple('Address', ['ip', 'port'])
+    _Address = collections.namedtuple('Address', ['ip', 'port'])
 
     class ScheduledPacket(object):
 
@@ -70,12 +70,12 @@ class RUDPConnection(object):
         sent to that adddress, but the packets contain the address
         of their final destination. This is used for routing.
         """
-        self.own_addr = self.Address(*own_addr)
-        self.dest_addr = self.Address(*dest_addr)
+        self.own_addr = self._Address(*own_addr)
+        self.dest_addr = self._Address(*dest_addr)
         if relay_addr is None:
             self.relay_addr = dest_addr
         else:
-            self.relay_addr = self.Address(*relay_addr)
+            self.relay_addr = self._Address(*relay_addr)
 
         self.connected = False
 
