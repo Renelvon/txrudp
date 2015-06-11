@@ -186,7 +186,7 @@ class RUDPConnection(object):
             self.connected and
             not self._looping_send.running and
             len(self._sending_window) < constants.WINDOW_SIZE and
-            len(self._packet_queue)
+            len(self._segment_queue)
         ):
             self._looping_send.start(0)
 
@@ -197,7 +197,7 @@ class RUDPConnection(object):
         if (
             self._looping_send.running and (
                 len(self._sending_window) >= constants.WINDOW_SIZE or
-                not len(self._packet_queue)
+                not len(self._segment_queue)
             )
         ):
             self._looping_send.stop()
@@ -309,8 +309,8 @@ class RUDPConnection(object):
 
         Pause dequeueing if it would overflow the send window.
         """
-        assert self._message_queue, 'Looping send active despite empty queue.'
-        more_fragments, message = self._message_queue.pop()
+        assert self._segment_queue, 'Looping send active despite empty queue.'
+        more_fragments, message = self._segment_queue.pop()
 
         rudp_packet = packet.RUDPPacket(
             self._get_next_sequence_number(),
@@ -322,7 +322,7 @@ class RUDPConnection(object):
         )
         self._schedule_send_in_order(rudp_packet, constants.PACKET_TIMEOUT)
 
-        self._attempt_disabling_send_packet()
+        self._attempt_disabling_looping_send()
 
     def _finalize_packet(self, rudp_packet):
         """
