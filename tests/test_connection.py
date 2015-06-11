@@ -104,51 +104,9 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         con.shutdown()
 
-    def test_send_syn_upon_initialization(self):
-        for _ in range(constants.MAX_RETRANSMISSIONS):
-            # Each advance forces a SYN packet retransmission.
-            self.clock.advance(constants.PACKET_TIMEOUT)
+    # == Test INITIAL state ==
 
-        # Force transmission of FIN packet and shutdown.
-        self.clock.advance(constants.PACKET_TIMEOUT)
-
-        # Trap any calls after shutdown.
-        self.clock.advance(100 * constants.PACKET_TIMEOUT)
-        connection.REACTOR.runUntilCurrent()
-
-        m_calls = self.proto_mock.send_datagram.call_args_list
-        self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
-
-        first_syn_call = m_calls[0]
-        syn_packet = json.loads(first_syn_call[0][0])
-        address = first_syn_call[0][1]
-
-        self.assertEqual(address, self.con.relay_addr)
-        self.assertGreater(syn_packet['sequence_number'], 0)
-        self.assertLess(syn_packet['sequence_number'], 2**16)
-
-        expected_syn_packet = packet.RUDPPacket(
-            syn_packet['sequence_number'],
-            self.con.dest_addr,
-            self.con.own_addr,
-            syn=True
-        ).to_json()
-
-        for call in m_calls[:-1]:
-            self.assertEqual(json.loads(call[0][0]), expected_syn_packet)
-            self.assertEqual(call[0][1], address)
-
-        expected_fin_packet = packet.RUDPPacket(
-            0,
-            self.con.dest_addr,
-            self.con.own_addr,
-            fin=True
-        ).to_json()
-
-        self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
-        self.assertEqual(m_calls[-1][0][1], address)
-
-    def test_receive_fin_packet_while_disconnected(self):
+    def test_receive_fin_during_initial(self):
         fin_rudp_packet = packet.RUDPPacket(
             0,
             self.own_addr,
@@ -157,11 +115,12 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         )
 
         self.con.receive_packet(fin_rudp_packet)
+        self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
         self.handler_mock.handle_shutdown.assert_not_called()
 
-    def test_wake_up_via_syn_packet(self):
+    def test_receive_syn_during_initial(self):
         remote_seqnum = 42
         remote_syn_packet = packet.RUDPPacket(
             remote_seqnum,
@@ -217,7 +176,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
         self.assertEqual(m_calls[-1][0][1], address)
 
-    def test_wake_up_via_synack_packet_is_ignored(self):
+    def test_receive_synack_during_initial(self):
         remote_synack_packet = packet.RUDPPacket(
             42,
             self.con.own_addr,
@@ -228,3 +187,96 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.con.receive_packet(remote_synack_packet)
         self.assertFalse(self.con.connected)
+
+    def test_receive_normal_during_initial(self):
+        remote_normal_packet = packet.RUDPPacket(
+            42,
+            self.con.own_addr,
+            self.con.dest_addr,
+            ack=2**15
+        )
+
+        self.con.receive_packet(remote_normal_packet)
+        self.clock.advance(0)
+        connection.REACTOR.runUntilCurrent()
+
+        self.assertFalse(self.con.connected)
+        self.handler_mock.receive_message.assert_not_called()
+
+    # == Test CONNECTING state ==
+
+    def _initial_to_connecting(self):
+        connection.REACTOR.runUntilCurrent()
+
+    def test_send_syn_during_connecting(self):
+        self._initial_to_connecting()
+
+        for _ in range(constants.MAX_RETRANSMISSIONS):
+            # Each advance forces a SYN packet retransmission.
+            self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Force transmission of FIN packet and shutdown.
+        self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Trap any calls after shutdown.
+        self.clock.advance(100 * constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
+
+        first_syn_call = m_calls[0]
+        syn_packet = json.loads(first_syn_call[0][0])
+        address = first_syn_call[0][1]
+
+        self.assertEqual(address, self.con.relay_addr)
+        self.assertGreater(syn_packet['sequence_number'], 0)
+        self.assertLess(syn_packet['sequence_number'], 2**16)
+
+        expected_syn_packet = packet.RUDPPacket(
+            syn_packet['sequence_number'],
+            self.con.dest_addr,
+            self.con.own_addr,
+            syn=True
+        ).to_json()
+
+        for call in m_calls[:-1]:
+            self.assertEqual(json.loads(call[0][0]), expected_syn_packet)
+            self.assertEqual(call[0][1], address)
+
+        expected_fin_packet = packet.RUDPPacket(
+            0,
+            self.con.dest_addr,
+            self.con.own_addr,
+            fin=True
+        ).to_json()
+
+        self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
+        self.assertEqual(m_calls[-1][0][1], address)
+
+    def test_receive_synack_during_connecting(self):
+        self._initial_to_connecting()
+
+    def test_receive_fin_during_connecting(self):
+        self._initial_to_connecting()
+
+    def test_receive_normal_during_connecting(self):
+        self._initial_to_connecting()
+
+        remote_normal_packet = packet.RUDPPacket(
+            42,
+            self.con.own_addr,
+            self.con.dest_addr,
+            ack=2**15
+        )
+
+        self.con.receive_packet(remote_normal_packet)
+        self.clock.advance(0)
+        connection.REACTOR.runUntilCurrent()
+
+        self.assertFalse(self.con.connected)
+        self.handler_mock.receive_message.assert_not_called()
+
+    # == Test HALF_CONNECTED state ==
+    # == Test CONNECTED state ==
+    # == Test SHUTDOWN state ==
