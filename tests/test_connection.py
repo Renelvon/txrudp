@@ -109,8 +109,8 @@ class TestRUDPConnectionAPI(unittest.TestCase):
     def test_receive_fin_during_initial(self):
         fin_rudp_packet = packet.RUDPPacket(
             0,
-            self.own_addr,
-            self.addr1,
+            self.con.own_addr,
+            self.con.dest_addr,
             fin=True
         )
 
