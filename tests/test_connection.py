@@ -56,9 +56,6 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.clock = task.Clock()
-        connection.REACTOR.callLater = cls.clock.callLater
-
         cls.public_ip = '123.45.67.89'
         cls.port = 12345
         cls.own_addr = (cls.public_ip, cls.port)
@@ -66,6 +63,9 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         cls.addr2 = ('231.76.45.89', 15243)
 
     def setUp(self):
+        self.clock = task.Clock()
+        connection.REACTOR.callLater = self.clock.callLater
+
         self.proto_mock = mock.Mock(spec_set=rudp.ConnectionMultiplexer)
         self.handler_mock = mock.Mock(spec_set=connection.Handler)
         self.con = connection.RUDPConnection(
