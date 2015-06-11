@@ -115,8 +115,11 @@ class RUDPConnection(object):
         """
         Called by protocol when a packet arrives for this connection.
 
-        Process received packet and update sender/receiver state.
+        Process received packet and update connection state.
+
         Silently drop any non-SYN packet if we are disconnected.
+        Silently drop any FIN packet if we haven't yet attempted to
+        connect.
 
         NOTE: It is guaranteed that this method will be called
         exactly once for each inbound packet, so it is the ideal
@@ -129,7 +132,7 @@ class RUDPConnection(object):
                 packet.RUDP_PACKET_JSON_SCHEMA.
         """
         if rudp_packet.fin:
-            if self.connected:
+            if self.connected or not self._syn_handle.active():
                 self._process_fin_packet(rudp_packet)
         elif rudp_packet.syn:
             if not self.connected:
