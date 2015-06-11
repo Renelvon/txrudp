@@ -137,7 +137,7 @@ class RUDPConnection(object):
         elif rudp_packet.syn:
             if not self.connected:
                 self._process_syn_packet(rudp_packet)
-        else:
+        elif self.connected:
             self._process_casual_packet(rudp_packet)
 
     def shutdown(self):
