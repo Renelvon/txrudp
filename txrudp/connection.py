@@ -397,6 +397,18 @@ class RUDPConnection(object):
                 sch_packet.timeout_cb.cancel()
         self._sending_window.clear()
 
+    def _process_fin_packet(self, rudp_packet):
+        """
+        Process a received FIN packet.
+
+        Terminate connection after possibly dispatching any
+        last messages to handler.
+
+        Args:
+            rudp_packet: A packet.RUDPPacket with FIN flag set.
+        """
+        self.shutdown()
+
     def _process_casual_packet(self, rudp_packet):
         """
         Process received packet.
