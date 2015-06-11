@@ -172,6 +172,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         )
 
         self.con.receive_packet(remote_syn_packet)
+        self.assertTrue(self.con.connected)
         for _ in range(constants.MAX_RETRANSMISSIONS):
             # Each advance forces a SYNACK packet retransmission.
             self.clock.advance(constants.PACKET_TIMEOUT)
