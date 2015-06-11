@@ -161,3 +161,58 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
         self.handler_mock.handle_shutdown.assert_not_called()
+
+    def test_wake_up_via_syn_packet(self):
+        remote_seqnum = 42
+        remote_syn_packet = packet.RUDPPacket(
+            remote_seqnum,
+            self.con.own_addr,
+            self.con.dest_addr,
+            syn=True
+        )
+
+        self.con.receive_packet(remote_syn_packet)
+        for _ in range(constants.MAX_RETRANSMISSIONS):
+            # Each advance forces a SYNACK packet retransmission.
+            self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Force transmission of FIN packet and shutdown.
+        self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Trap any calls after shutdown.
+        self.clock.advance(100 * constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
+
+        first_synack_call = m_calls[0]
+        synack_packet = json.loads(first_synack_call[0][0])
+        address = first_synack_call[0][1]
+
+        self.assertEqual(address, self.con.relay_addr)
+        self.assertGreater(synack_packet['sequence_number'], 0)
+        self.assertLess(synack_packet['sequence_number'], 2**16)
+
+        expected_synack_packet = packet.RUDPPacket(
+            synack_packet['sequence_number'],
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=remote_seqnum + 1,
+            syn=True,
+        ).to_json()
+
+        for call in m_calls[:-1]:
+            self.assertEqual(json.loads(call[0][0]), expected_synack_packet)
+            self.assertEqual(call[0][1], address)
+
+        expected_fin_packet = packet.RUDPPacket(
+            0,
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=remote_seqnum + 1,
+            fin=True
+        ).to_json()
+
+        self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
+        self.assertEqual(m_calls[-1][0][1], address)
