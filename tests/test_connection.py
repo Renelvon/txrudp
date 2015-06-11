@@ -217,3 +217,15 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
         self.assertEqual(m_calls[-1][0][1], address)
+
+    def test_wake_up_via_synack_packet_is_ignored(self):
+        remote_synack_packet = packet.RUDPPacket(
+            42,
+            self.con.own_addr,
+            self.con.dest_addr,
+            syn=True,
+            ack=2**15
+        )
+
+        self.con.receive_packet(remote_synack_packet)
+        self.assertFalse(self.con.connected)
