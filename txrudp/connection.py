@@ -326,7 +326,7 @@ class RUDPConnection(object):
         Pause dequeueing if it would overflow the send window.
         """
         assert self._segment_queue, 'Looping send active despite empty queue.'
-        more_fragments, message = self._segment_queue.pop()
+        more_fragments, message = self._segment_queue.popleft()
 
         rudp_packet = packet.RUDPPacket(
             self._get_next_sequence_number(),
