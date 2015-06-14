@@ -40,7 +40,7 @@ class RUDPConnection(object):
             Create a new scheduled packet.
 
             Args:
-                rudp_packet: A packet.RUDPPacket.
+                rudp_packet: An packet.RUDPPacket in string format.
                 timeout: Seconds to wait before activating timeout_cb,
                     as an integer.
                 timeout_cb: Callback to invoke upon timer expiration;
