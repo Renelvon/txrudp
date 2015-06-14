@@ -266,8 +266,57 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
         self.assertEqual(m_calls[-1][0][1], address)
 
-    def test_receive_synack_during_connecting(self):
+    def test_send_normal_during_connecting(self):
         self._initial_to_connecting()
+        
+        self.proto_mock.reset_mock()
+        self.con.send_message('Yellow Submarine')
+        self.clock.advance(0)
+        connection.REACTOR.runUntilCurrent()
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), 0)
+
+    def test_receive_proper_synack_during_connecting(self):
+        self._initial_to_connecting()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        sent_syn_packet = json.loads(m_calls[0][0][0])
+        seqnum = sent_syn_packet['sequence_number']
+
+        remote_synack_rudppacket = packet.RUDPPacket(
+            42,
+            self.con.own_addr,
+            self.con.dest_addr,
+            ack=seqnum + 1,
+            syn=True
+        )
+        self.con.receive_packet(remote_synack_rudppacket)
+
+        self.clock.advance(0)
+        connection.REACTOR.runUntilCurrent()
+
+        self.assertTrue(self.con.connected)
+
+    def test_receive_improper_synack_during_connecting(self):
+        self._initial_to_connecting()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        sent_syn_packet = json.loads(m_calls[0][0][0])
+        seqnum = sent_syn_packet['sequence_number']
+
+        remote_synack_rudppacket = packet.RUDPPacket(
+            42,
+            self.con.own_addr,
+            self.con.dest_addr,
+            ack=seqnum + 800,
+            syn=True
+        )
+        self.con.receive_packet(remote_synack_rudppacket)
+
+        self.clock.advance(0)
+        connection.REACTOR.runUntilCurrent()
+
+        self.assertFalse(self.con.connected)
 
     def test_receive_fin_during_connecting(self):
         self._initial_to_connecting()
@@ -305,8 +354,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(local_fin_packet, expected_fin_packet)
 
     def test_receive_normal_during_connecting(self):
-        self._initial_to_connecting()
-
+        pass
 
     # == Test HALF_CONNECTED state ==
     # == Test CONNECTED state ==

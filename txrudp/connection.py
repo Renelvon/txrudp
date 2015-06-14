@@ -469,7 +469,7 @@ class RUDPConnection(object):
                 return
             lowest_seqnum = tuple(self._sending_window.keys())[0]
             if rudp_packet.ack == lowest_seqnum + 1:
-                self._retire_packets_with_acknum_up_to(rudp_packet.ack)
+                self._retire_packets_with_seqnum_up_to(rudp_packet.ack)
                 self.connected = True
         else:
             self._next_expected_seqnum = rudp_packet.sequence_number + 1
