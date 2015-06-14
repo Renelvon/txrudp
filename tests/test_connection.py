@@ -319,7 +319,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
-        self.next_seqnum = seqnum + 2
+        self.next_seqnum = seqnum + 1
         self.next_acknum = 43
 
     def test_receive_proper_synack_during_connecting(self):
@@ -397,6 +397,55 @@ class TestRUDPConnectionAPI(unittest.TestCase):
             syn=True
         )
         self.con.receive_packet(remote_syn_packet)
+
+    def test_send_normal_message_during_half_connected(self):
+        self._initial_to_connecting()
+        self._connecting_to_connected()
+
+        self.proto_mock.reset_mock()
+        self.handler_mock.reset_mock()
+
+        self.con.send_message("Yellow Submarine")
+
+        for _ in range(constants.MAX_RETRANSMISSIONS):
+            # Each advance forces a retransmission.
+            self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Force transmission of FIN packet and shutdown.
+        self.clock.advance(constants.PACKET_TIMEOUT)
+
+        # Trap any calls after shutdown.
+        self.clock.advance(100 * constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
+        first_send_call = m_calls[0]
+        normal_packet = json.loads(first_send_call[0][0])
+        address = first_send_call[0][1]
+        self.assertEqual(address, self.con.relay_addr)
+
+        expected_normal_packet = packet.RUDPPacket(
+            self.next_seqnum,
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=0,
+            payload='Yellow Submarine'
+        ).to_json()
+
+        for call in m_calls[:-1]:
+            self.assertEqual(json.loads(call[0][0]), expected_normal_packet)
+            self.assertEqual(call[0][1], address)
+
+        expected_fin_packet = packet.RUDPPacket(
+            0,
+            self.con.dest_addr,
+            self.con.own_addr,
+            fin=True
+        ).to_json()
+
+        self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
+        self.assertEqual(m_calls[-1][0][1], address)
 
     # == Test CONNECTED state ==
     # == Test SHUTDOWN state ==
