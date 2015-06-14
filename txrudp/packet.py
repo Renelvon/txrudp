@@ -14,8 +14,8 @@ import jsonschema
 # lacking. Hence the use of regexes from Regular Expressions Cookbook.
 # For now, only standard (non-compressed) IPv6 addresses are
 # supported. This might change in the future.
-_IPV4_REGEX = '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
-_IPV6_REGEX = '^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$'
+_IPV4_REGEX = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+_IPV6_REGEX = r'^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$'
 
 RUDP_PACKET_JSON_SCHEMA = {
     '$schema': 'http://json-schema.org/schema#',
