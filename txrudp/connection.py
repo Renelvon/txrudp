@@ -449,8 +449,8 @@ class RUDPConnection(object):
         """
         Process received SYN packet.
 
-        This method can only be called if the connection has been
-        established; thus ignore any payload.
+        This method can only be called if the connection has not yet
+        been established; thus ignore any payload.
 
         We use double handshake and consider the connection to the
         remote endpoint established upon either:
