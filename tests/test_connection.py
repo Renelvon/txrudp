@@ -276,9 +276,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         m_calls = self.proto_mock.send_datagram.call_args_list
         self.assertEqual(len(m_calls), 0)
 
-    def test_receive_proper_synack_during_connecting(self):
-        self._initial_to_connecting()
-
+    def _connecting_to_connected(self):
         m_calls = self.proto_mock.send_datagram.call_args_list
         sent_syn_packet = json.loads(m_calls[0][0][0])
         seqnum = sent_syn_packet['sequence_number']
@@ -294,6 +292,13 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
+
+        self.next_seqnum = seqnum + 2
+        self.next_acknum = 43
+
+    def test_receive_proper_synack_during_connecting(self):
+        self._initial_to_connecting()
+        self._connecting_to_connected()
 
         self.assertTrue(self.con.connected)
 
