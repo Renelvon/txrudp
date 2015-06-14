@@ -362,5 +362,15 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         pass
 
     # == Test HALF_CONNECTED state ==
+    def _initial_to_half_connected(self):
+        remote_seqnum = 42
+        remote_syn_packet = packet.RUDPPacket(
+            remote_seqnum,
+            self.con.own_addr,
+            self.con.dest_addr,
+            syn=True
+        )
+        self.con.receive_packet(remote_syn_packet)
+
     # == Test CONNECTED state ==
     # == Test SHUTDOWN state ==
