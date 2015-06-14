@@ -478,8 +478,10 @@ class RUDPConnection(object):
                 return
             lowest_seqnum = tuple(self._sending_window.keys())[0]
             if rudp_packet.ack == lowest_seqnum + 1:
-                self._retire_packets_with_seqnum_up_to(rudp_packet.ack)
+                sch_packet = self._sending_window.pop(lowest_seqnum)
+                sch_packet.timeout_cb.cancel()
                 self.connected = True
+                self._attempt_enabling_looping_send()
         else:
             self._next_expected_seqnum = rudp_packet.sequence_number + 1
             self._clear_sending_window()
