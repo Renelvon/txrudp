@@ -188,8 +188,11 @@ class RUDPConnection(object):
         """
         max_size = constants.UDP_SAFE_SEGMENT_SIZE
         count = (len(message) + max_size - 1) // max_size
-        for i in range(count):
-            yield (count - i - 1, message[i * max_size: (i + 1) * max_size])
+        segments = (
+            (count - i - 1, message[i * max_size: (i + 1) * max_size])
+            for i in range(count)
+        )
+        return segments
 
     def _attempt_enabling_looping_send(self):
         """
