@@ -447,6 +447,41 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
         self.assertEqual(m_calls[-1][0][1], address)
 
+    def test_send_big_normal_message_during_half_connected(self):
+        self._initial_to_connecting()
+        self._connecting_to_connected()
+
+        self.proto_mock.reset_mock()
+        self.handler_mock.reset_mock()
+
+        big_message = ''.join((
+            'a' * constants.UDP_SAFE_SEGMENT_SIZE,
+            'b' * constants.UDP_SAFE_SEGMENT_SIZE,
+            'c' * constants.UDP_SAFE_SEGMENT_SIZE
+        ))
+        self.con.send_message(big_message)
+
+        self.clock.advance(constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+        m_calls = self.proto_mock.send_datagram.call_args_list
+
+        self.assertEqual(len(m_calls), 3)
+        packets = tuple(json.loads(call[0][0]) for call in m_calls)
+
+        expected_normal_packets = tuple(
+            packet.RUDPPacket(
+                self.next_seqnum + i,
+                self.con.dest_addr,
+                self.con.own_addr,
+                ack=0,
+                payload=payload * constants.UDP_SAFE_SEGMENT_SIZE,
+                more_fragments=2 - i
+            ).to_json()
+            for i, payload in zip(range(3), 'abc')
+        )
+
+        self.assertEqual(packets, expected_normal_packets)
+
     # == Test CONNECTED state ==
     # == Test SHUTDOWN state ==
     def test_send_normal_during_shutdown(self):
