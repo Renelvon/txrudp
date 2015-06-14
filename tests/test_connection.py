@@ -461,4 +461,23 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
         self.proto_mock.send_datagram.assert_not_called()
-        pass
+
+    def test_receive_normal_during_shutdown(self):
+        self._initial_to_connecting()
+        self._connecting_to_connected()
+
+        self.handler_mock.reset_mock()
+
+        normal_rudp_packet = packet.RUDPPacket(
+            self.next_seqnum,
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=0,
+            payload='Yellow Submarine'
+        )
+        self.con.receive_packet(normal_rudp_packet)
+
+        self.clock.advance(100 * constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        self.handler_mock.receive_message.assert_not_called()
