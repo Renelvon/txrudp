@@ -53,6 +53,15 @@ class RUDPConnection(object):
             self.timeout_cb = timeout_cb
             self.retries = retries
 
+        def __repr__(self):
+            return '{0}({1}, {2}, {3}, {4})'.format(
+                self.__class__.__name__,
+                self.rudp_packet,
+                self.timeout,
+                self.timeout_cb,
+                self.retries
+            )
+
     def __init__(self, proto, handler, own_addr, dest_addr, relay_addr=None):
         """
         Create a new connection and register it with the protocol.
