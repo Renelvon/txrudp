@@ -54,6 +54,28 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
         timeout_cb.cancel()
 
+    def test_repr(self):
+        rudp_packet = json.dumps(
+                packet.RUDPPacket(
+                1,
+                ('123.45.67.89', 12345),
+                ('213.54.76.98', 54321)
+            ).to_json()
+        )
+        timeout = 0.7
+        timeout_cb = reactor.callLater(timeout, lambda: None)
+        sp = self.spclass(rudp_packet, timeout, timeout_cb, retries=10)
+
+        self.assertEqual(
+            repr(sp),
+            'ScheduledPacket({0}, {1}, {2}, {3})'.format(
+                rudp_packet,
+                timeout,
+                timeout_cb,
+                sp.retries
+            )
+        )
+
 
 class TestRUDPConnectionAPI(unittest.TestCase):
 
