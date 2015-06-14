@@ -449,3 +449,16 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
     # == Test CONNECTED state ==
     # == Test SHUTDOWN state ==
+    def test_send_normal_during_shutdown(self):
+        self._initial_to_connecting()
+        self._connecting_to_connected()
+
+        self.proto_mock.reset_mock()
+
+        self.con.send_message("Yellow Submarine")
+
+        self.clock.advance(100 * constants.PACKET_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        self.proto_mock.send_datagram.assert_not_called()
+        pass
