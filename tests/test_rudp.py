@@ -6,11 +6,11 @@ import unittest
 import mock
 from twisted.internet import address, protocol, udp
 
-from txrudp import connection, heap, packet, rudp
+from txrudp import connection, packet, rudp
 
 
 class TestConnectionManagerAPI(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         cls.public_ip = '123.45.67.89'
@@ -54,7 +54,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         self.assertNotIn(self.addr1, cm)
         with self.assertRaises(KeyError):
             con = cm[self.addr1]
-        
+
     def test_set_and_get_new_connection(self):
         cm = self._make_cm()
         mock_connection = mock.Mock(spec_set=connection.RUDPConnection)

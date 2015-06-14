@@ -4,12 +4,13 @@ from txrudp import heap, packet
 
 
 class TestHeapAPI(unittest.TestCase):
-    
+
     def test_init(self):
         h = heap.Heap()
         self.assertEqual(len(h), 0)
 
-    def _make_packet_with_seqnum(self, seqnum):
+    @staticmethod
+    def _make_packet_with_seqnum(seqnum):
         return packet.RUDPPacket(
             seqnum,
             '123.45.67.89',

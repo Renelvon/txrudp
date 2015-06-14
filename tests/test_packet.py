@@ -6,7 +6,7 @@ from txrudp import packet
 
 
 class TestPacketAPI(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         cls.dest_addr = ('123.45.67.89', 12345)
@@ -73,7 +73,6 @@ class TestPacketAPI(unittest.TestCase):
         self.assertGreaterEqual(p1, p1)
         self.assertLessEqual(p1, p1)
 
-
     def _assert_packet_equals_json(self, p, json_obj):
         self.assertEqual(p.sequence_number, json_obj['sequence_number'])
         self.assertEqual(p.dest_addr[0], json_obj['dest_ip'])
@@ -102,10 +101,6 @@ class TestPacketAPI(unittest.TestCase):
     def test_from_validated_json(self):
         p = packet.RUDPPacket.from_validated_json(self.json_dict)
         self._assert_packet_equals_json(p, self.json_dict)
-
-    def _assert_json_fails_validation(self, json_obj):
-        with self.assertRaises(jsonschema.ValidationError):
-            packet.RUDPPacket.from_unvalidated_json(self.json_obj)
 
     def test_from_unvalidated_good_json(self):
         try:

@@ -127,10 +127,14 @@ class ConnectionMultiplexer(
             rudp_packet = packet.RUDPPacket.from_unvalidated_json(json_obj)
         except (ValueError, TypeError):
             if self._logger is not None:
-                self._logger.info('Bad packet (bad JSON format): %s', datagram)
+                self._logger.info(
+                    'Bad packet (bad JSON format): {0}'.format(datagram)
+                )
         except jsonschema.ValidationError:
             if self._logger is not None:
-                self._logger.info('Bad packet (invalid RUDP packet): %s', datagram)
+                self._logger.info(
+                    'Bad packet (invalid RUDP packet): {0}'.format(datagram)
+                )
         else:
             if rudp_packet.dest_addr[0] != self.public_ip:
                 if self.relaying:

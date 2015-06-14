@@ -34,10 +34,9 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
         timeout_cb.cancel()
 
-
     def test_init_with_retries(self):
         rudp_packet = json.dumps(
-                packet.RUDPPacket(
+            packet.RUDPPacket(
                 1,
                 ('123.45.67.89', 12345),
                 ('213.54.76.98', 54321)
@@ -56,7 +55,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     def test_repr(self):
         rudp_packet = json.dumps(
-                packet.RUDPPacket(
+            packet.RUDPPacket(
                 1,
                 ('123.45.67.89', 12345),
                 ('213.54.76.98', 54321)
@@ -294,7 +293,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
     def test_send_normal_during_connecting(self):
         self._initial_to_connecting()
-        
+
         self.proto_mock.reset_mock()
         self.con.send_message('Yellow Submarine')
         self.clock.advance(0)
@@ -421,7 +420,6 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         m_calls = self.proto_mock.send_datagram.call_args_list
         self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
         first_send_call = m_calls[0]
-        normal_packet = json.loads(first_send_call[0][0])
         address = first_send_call[0][1]
         self.assertEqual(address, self.con.relay_addr)
 
