@@ -106,6 +106,17 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
     # == Test INITIAL state ==
 
+    def test_send_normal_during_initial(self):
+        self.con.send_message('Yellow Submarine')
+        self.clock.advance(100)
+        connection.REACTOR.runUntilCurrent()
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), 1)
+        self.assertEqual(json.loads(m_calls[0][0][0])['payload'], '')
+
+    def test_shutdown_during_initial(self):
+        pass
+
     def test_receive_fin_during_initial(self):
         fin_rudp_packet = packet.RUDPPacket(
             0,
