@@ -465,10 +465,10 @@ class RUDPConnection(object):
         if rudp_packet.ack > 0:
             # Prevent crash if malicious node initiates connection
             # with SYNACK message.
-            if (
-                self._sending_window and
-                rudp_packet.ack == self._sending_window[0].sequence_number + 1
-            ):
+            if not self._sending_window:
+                return
+            lowest_seqnum = tuple(self._sending_window.keys())[0]
+            if rudp_packet.ack == lowest_seqnum + 1:
                 self._retire_packets_with_acknum_up_to(rudp_packet.ack)
                 self.connected = True
         else:
@@ -486,8 +486,10 @@ class RUDPConnection(object):
             acknum: Acknowledgement number of next expected
                 outbound packet.
         """
+        if not self._sending_window:
+            return
+        lowest_seqnum = tuple(self._sending_window.keys())[0]
         acknum = min(acknum, self._next_sequence_number)
-        lowest_seqnum = self._sending_window[0].sequence_number
         for seqnum in range(lowest_seqnum, acknum):
             sch_packet = self._sending_window.pop(seqnum)
             sch_packet.timeout_cb.cancel()
