@@ -16,10 +16,12 @@ class TestScheduledPacketAPI(unittest.TestCase):
         cls.spclass = connection.RUDPConnection.ScheduledPacket
 
     def test_default_init(self):
-        rudp_packet = packet.RUDPPacket(
-            1,
-            ('123.45.67.89', 12345),
-            ('213.54.76.98', 54321)
+        rudp_packet = json.dumps(
+            packet.RUDPPacket(
+                1,
+                ('123.45.67.89', 12345),
+                ('213.54.76.98', 54321)
+            ).to_json()
         )
         timeout = 0.7
         timeout_cb = reactor.callLater(timeout, lambda: None)
@@ -34,10 +36,12 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
 
     def test_init_with_retries(self):
-        rudp_packet = packet.RUDPPacket(
-            1,
-            ('123.45.67.89', 12345),
-            ('213.54.76.98', 54321)
+        rudp_packet = json.dumps(
+                packet.RUDPPacket(
+                1,
+                ('123.45.67.89', 12345),
+                ('213.54.76.98', 54321)
+            ).to_json()
         )
         timeout = 0.7
         timeout_cb = reactor.callLater(timeout, lambda: None)
