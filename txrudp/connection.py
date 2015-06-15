@@ -513,6 +513,20 @@ class RUDPConnection(object):
         if lowest_seqnum < acknum:
             self._attempt_enabling_looping_send()
 
+    def _attempt_enabling_looping_receive(self):
+        """Activate looping receive."""
+        if (
+            self.connected and
+            not self._looping_receive.running and
+            self._receive_heap
+        ):
+            self._looping_receive.start(0)
+
+    def _attempt_disabling_looping_receive(self):
+        """Deactivate looping receive."""
+        if self._looping_receive.running:
+            self._looping_receive.stop()
+
     def _pop_received_packet(self):
         """
         Attempt to reconstruct a received packet and process payload.
