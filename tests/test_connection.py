@@ -520,6 +520,32 @@ class TestRUDPConnectionAPI(unittest.TestCase):
             'Yellow Submarine'
         )
 
+    def test_receive_normal_packets_during_connected(self):
+        self._initial_to_connecting()
+        self._connecting_to_connected()
+
+        self.handler_mock.reset_mock()
+
+        payloads = ('a', 'b', 'c')
+        remote_normal_packets = tuple(
+            packet.RUDPPacket(
+                self.next_acknum + i,
+                self.con.own_addr,
+                self.con.dest_addr,
+                payload=payload,
+                ack=self.next_seqnum
+            )
+            for i, payload in enumerate(payloads)
+        )
+        for p in reversed(remote_normal_packets):
+            self.con.receive_packet(p)
+
+        self.clock.advance(0)
+        connection.REACTOR.runUntilCurrent()
+
+        r_calls = self.handler_mock.receive_message.call_args_list
+        messages = tuple(call[0][0] for call in r_calls)
+        self.assertEqual(payloads, messages)
     # == Test SHUTDOWN state ==
     def test_send_normal_during_shutdown(self):
         self._initial_to_connecting()
