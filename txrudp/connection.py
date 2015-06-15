@@ -486,11 +486,13 @@ class RUDPConnection(object):
                 self.connected = True
                 self._attempt_enabling_looping_send()
         else:
-            self._next_expected_seqnum = rudp_packet.sequence_number + 1
             self._clear_sending_window()
             if not self._syn_handle.active():
                 self._send_syn()
             self.connected = True
+
+        if self._next_expected_seqnum <= rudp_packet.sequence_number:
+            self._next_expected_seqnum = rudp_packet.sequence_number + 1
 
     def _retire_packets_with_seqnum_up_to(self, acknum):
         """
