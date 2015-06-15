@@ -204,7 +204,7 @@ class RUDPConnection(object):
             len(self._sending_window) < constants.WINDOW_SIZE and
             len(self._segment_queue)
         ):
-            self._looping_send.start(0)
+            self._looping_send.start(0, now=True)
 
     def _attempt_disabling_looping_send(self):
         """
@@ -520,7 +520,7 @@ class RUDPConnection(object):
             not self._looping_receive.running and
             self._receive_heap
         ):
-            self._looping_receive.start(0)
+            self._looping_receive.start(0, now=True)
 
     def _attempt_disabling_looping_receive(self):
         """Deactivate looping receive."""
