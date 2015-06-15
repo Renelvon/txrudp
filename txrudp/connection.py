@@ -261,12 +261,6 @@ class RUDPConnection(object):
         )
         self._schedule_send_out_of_order(ack_packet)
 
-        # NOTE: If the ACK packet is lost, the remote host will
-        # retransmit the unacknowledged message and cause the local
-        # host to resend the ACK. Therefore, the only meaningful ACK
-        # timeout is the keep-alive timeout.
-        self._reset_ack_timeout(constants.KEEP_ALIVE_TIMEOUT)
-
     def _send_fin(self):
         """
         Create and schedule a FIN packet.
@@ -388,7 +382,6 @@ class RUDPConnection(object):
                 seqnum
             )
             sch_packet.retries += 1
-            self._reset_ack_timeout(constants.KEEP_ALIVE_TIMEOUT)
 
     def _reset_ack_timeout(self, timeout):
         """

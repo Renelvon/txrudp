@@ -13,9 +13,6 @@ PACKET_TIMEOUT = 0.7
 BARE_ACK_TIMEOUT = 0.3
 
 # [seconds]
-KEEP_ALIVE_TIMEOUT = 5
-
-# [seconds]
 MAX_PACKET_DELAY = 20
 
 # If a packet is retransmitted more than that many times,
