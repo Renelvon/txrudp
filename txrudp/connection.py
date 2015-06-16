@@ -269,6 +269,7 @@ class RUDPConnection(object):
             ack=self._next_expected_seqnum
         )
         self._schedule_send_out_of_order(ack_packet)
+        self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
 
     def _send_fin(self):
         """
@@ -391,6 +392,7 @@ class RUDPConnection(object):
                 seqnum
             )
             sch_packet.retries += 1
+            self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
 
     def _reset_ack_timeout(self, timeout):
         """
@@ -455,7 +457,6 @@ class RUDPConnection(object):
             self._receive_heap.push(rudp_packet)
             if rudp_packet.sequence_number == self._next_expected_seqnum:
                 self._next_expected_seqnum += 1
-                self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
                 self._attempt_enabling_looping_receive()
 
     def _process_syn_packet(self, rudp_packet):
@@ -553,7 +554,6 @@ class RUDPConnection(object):
             last_seqnum = fragments[-1].sequence_number
             if self._next_expected_seqnum <= last_seqnum:
                 self._next_expected_seqnum = last_seqnum + 1
-                self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
 
             payload = ''.join(f.payload for f in fragments)
             self.handler.receive_message(payload)
