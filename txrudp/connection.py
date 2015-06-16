@@ -100,11 +100,16 @@ class RUDPConnection(object):
         self._receive_heap = heap.Heap()
 
         self._looping_send = task.LoopingCall(self._dequeue_outbound_message)
-        self._looping_ack = task.LoopingCall(self._send_ack)
         self._looping_receive = task.LoopingCall(self._pop_received_packet)
 
         # Initiate SYN sequence after receiving any pending SYN message.
         self._syn_handle = REACTOR.callLater(0, self._send_syn)
+
+        # Setup and immediately cancel the ACK loop; it should only
+        # be activated once the connection is in CONNECTED state.
+        # However, initializing here helps avoiding `is None` checks.
+        self._ack_handle = REACTOR.callLater(1, self._send_ack)
+        self._ack_handle.cancel()
 
     def send_message(self, message):
         """
@@ -164,12 +169,16 @@ class RUDPConnection(object):
         """
         self.connected = False
         self._send_fin()
-        if self._looping_ack.running:
-            self._looping_ack.stop()
+
+        if self._ack_handle.active():
+            self._ack_handle.cancel()
+
         if self._looping_send.running:
             self._looping_send.stop()
+
         if self._looping_receive.running:
             self._looping_receive.stop()
+
         self._clear_sending_window()
         self.handler.handle_shutdown()
 
@@ -385,15 +394,26 @@ class RUDPConnection(object):
 
     def _reset_ack_timeout(self, timeout):
         """
-        Reset timeout for bare ACK packet.
+        Reset timeout for next bare ACK packet.
+
+        Refrain from doing so if the receive heap is empty,
+        or we are not yet connected.
 
         Args:
             timeout: Seconds until a bare ACK packet is sent.
         """
-        if self._looping_ack.running:
-            self._looping_ack.stop()
+
+        if not self._receive_heap:
+            return
+
         if self.connected:
-            self._looping_ack.start(timeout)
+            if self._ack_handle.active():
+                self._ack_handle.reset(timeout)
+            else:
+                self._ack_handle.start(timeout)
+        else:
+            if self._ack_handle.active():
+                self._ack_handle.cancel()
 
     def _clear_sending_window(self):
         """
