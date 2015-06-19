@@ -8,6 +8,7 @@ Classes:
 
 import abc
 import collections
+import enum
 import json
 import random
 
@@ -18,6 +19,10 @@ from txrudp import constants, heap, packet
 
 REACTOR = reactor
 
+State = enum.Enum(
+    'State',
+    ('INITIAL', 'CONNECTING', 'HALF_CONNECTED', 'CONNECTED', 'SHUTDOWN')
+)
 
 class RUDPConnection(object):
 
