@@ -396,7 +396,6 @@ class RUDPConnection(object):
                 seqnum
             )
             sch_packet.retries += 1
-            self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
 
     def _reset_ack_timeout(self, timeout):
         """
