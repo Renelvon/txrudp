@@ -401,16 +401,9 @@ class RUDPConnection(object):
         """
         Reset timeout for next bare ACK packet.
 
-        Refrain from doing so if the receive heap is empty,
-        or we are not yet connected.
-
         Args:
             timeout: Seconds until a bare ACK packet is sent.
         """
-
-        if not self._receive_heap:
-            return
-
         if self.connected:
             if self._ack_handle.active():
                 self._ack_handle.reset(timeout)
