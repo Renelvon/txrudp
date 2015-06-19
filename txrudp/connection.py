@@ -210,7 +210,7 @@ class RUDPConnection(object):
 
     def _attempt_enabling_looping_send(self):
         """
-        Activate looping send dequeue if a packet can be sent immediately.
+        Enable dequeuing if a packet can be scheduled immediately.
         """
         if (
             self.connected and
@@ -222,7 +222,7 @@ class RUDPConnection(object):
 
     def _attempt_disabling_looping_send(self):
         """
-        Deactivate looping send if a packet can't be sent immediately.
+        Disable dequeuing if a packet cannot be scheduled.
         """
         if (
             self._looping_send.running and (
