@@ -274,7 +274,6 @@ class RUDPConnection(object):
             ack=self._next_expected_seqnum
         )
         self._schedule_send_out_of_order(ack_packet)
-        self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
 
     def _send_fin(self):
         """
