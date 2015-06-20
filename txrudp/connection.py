@@ -417,6 +417,11 @@ class RUDPConnection(object):
             if self._ack_handle.active():
                 self._ack_handle.cancel()
 
+    def _cancel_ack_timeout(self):
+        """Cancel timeout for next bare ACK packet."""
+        if self._ack_handle.active():
+            self._ack_handle.cancel()
+
     def _clear_sending_window(self):
         """
         Purge send window from scheduled packets.
