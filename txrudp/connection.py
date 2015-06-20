@@ -220,12 +220,16 @@ class RUDPConnection(object):
         ):
             self._looping_send.start(0, now=True)
 
-    def _attempt_disabling_looping_send(self):
+    def _attempt_disabling_looping_send(self, force=False):
         """
         Disable dequeuing if a packet cannot be scheduled.
+
+        Args:
+            force: If True, force disabling.
         """
         if (
             self._looping_send.running and (
+                force or
                 len(self._sending_window) >= constants.WINDOW_SIZE or
                 not len(self._segment_queue)
             )
