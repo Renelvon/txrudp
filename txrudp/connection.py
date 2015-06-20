@@ -241,11 +241,10 @@ class RUDPConnection(object):
         Create and schedule the initial SYN packet.
 
         The current ACK number is included; if it is greater than
-        0, then this is in effect a SYNACK packet.
+        0, then this actually is a SYNACK packet.
 
-        Until successfully acknowledged, all SYN(ACK) packets should
-        have the same (initial) sequence number.
-
+        NOTE: Until successfully acknowledged, all outbound SYN(ACK)
+        shall packets have the same (initial) sequence number.
         """
         syn_packet = packet.RUDPPacket(
             self._next_sequence_number,
