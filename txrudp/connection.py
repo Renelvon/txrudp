@@ -166,25 +166,20 @@ class RUDPConnection(object):
         1. Send a single FIN packet to remote host.
         2. Stop sending and acknowledging messages.
         3. Cancel all retransmission timers.
-        5. Alert handler about connection shutdown.
+        4. Alert handler about connection shutdown.
 
         The handler should prevent the connection from receiving
         any future messages. The simplest way to do this is to
         remove the connection from the protocol.
         """
         self.connected = False
+
         self._send_fin()
-
-        if self._ack_handle.active():
-            self._ack_handle.cancel()
-
-        if self._looping_send.running:
-            self._looping_send.stop()
-
-        if self._looping_receive.running:
-            self._looping_receive.stop()
-
+        self._cancel_ack_timeout()
+        self._attempt_disabling_looping_send(force=True)
+        self._attempt_disabling_looping_receive()
         self._clear_sending_window()
+
         self.handler.handle_shutdown()
 
     @staticmethod
