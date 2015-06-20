@@ -402,14 +402,10 @@ class RUDPConnection(object):
         Args:
             timeout: Seconds until a bare ACK packet is sent.
         """
-        if self.connected:
-            if self._ack_handle.active():
-                self._ack_handle.reset(timeout)
-            else:
-                self._ack_handle.start(timeout)
+        if self._ack_handle.active():
+            self._ack_handle.reset(timeout)
         else:
-            if self._ack_handle.active():
-                self._ack_handle.cancel()
+            self._ack_handle = REACTOR.callLater(timeout, self._send_ack)
 
     def _cancel_ack_timeout(self):
         """Cancel timeout for next bare ACK packet."""
