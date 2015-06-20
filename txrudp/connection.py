@@ -519,11 +519,20 @@ class RUDPConnection(object):
         lowest_seqnum = tuple(self._sending_window.keys())[0]
         acknum = min(acknum, self._next_sequence_number)
         for seqnum in range(lowest_seqnum, acknum):
-            sch_packet = self._sending_window.pop(seqnum)
-            sch_packet.timeout_cb.cancel()
+            self._retire_scheduled_packet_with_seqnum(seqnum)
 
         if lowest_seqnum < acknum:
             self._attempt_enabling_looping_send()
+
+    def _retire_scheduled_packet_with_seqnum(self, seqnum):
+        """
+        Retire ScheduledPacket with given seqnum.
+
+        Args:
+            seqnum: Sequence number of retired packet.
+        """
+        sch_packet = self._sending_window.pop(seqnum)
+        sch_packet.timeout_cb.cancel()
 
     def _attempt_enabling_looping_receive(self):
         """Activate looping receive."""
