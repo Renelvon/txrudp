@@ -5,5 +5,8 @@ max-line-length: 80
 autodetect: no
 pep8:
     full: true
+pylint:
+    disable:
+        - invalid-name
 pyroma:
     run: true
