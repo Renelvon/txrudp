@@ -108,7 +108,7 @@ class Connection(object):
         self._looping_receive = task.LoopingCall(self._pop_received_packet)
 
         # Initiate SYN sequence after receiving any pending SYN message.
-        self._syn_handle = REACTOR.callLater(0, self._send_syn)
+        self._syn_handle = REACTOR.callLater(0, self._wake_up)
 
         # Setup and immediately cancel the ACK loop; it should only
         # be activated once the connection is in CONNECTED state.
@@ -235,6 +235,17 @@ class Connection(object):
         """Return the next available sequence number."""
         self._next_sequence_number += 1
         return self._next_sequence_number
+
+    def _wake_up(self):
+        """
+        Compete initialization of connection.
+
+        This code will be executed after the first reactor loop
+        iteration, to allow SYN packets to be received during
+        the INITIAL state (i.e before the first outbound SYN packet
+        is created).
+        """
+        self._send_syn()
 
     def _send_syn(self):
         """
