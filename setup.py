@@ -4,7 +4,7 @@ import codecs
 from os import path
 import sys
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 
 _HERE = path.abspath(path.dirname(__file__))
@@ -34,7 +34,7 @@ setup(
         'Topic :: System :: Networking'
     ),
     keywords='rudp twisted reliable',
-    packages=find_packages(exclude=('tests',)),
+    packages=('txrudp'),
     install_requires=('jsonschema', 'twisted'),
     extras_require={
         ':python_version<="3.4"': ('argparse',),
