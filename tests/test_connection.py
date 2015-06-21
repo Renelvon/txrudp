@@ -17,7 +17,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     def test_default_init(self):
         rudp_packet = json.dumps(
-            packet.RUDPPacket(
+            packet.Packet(
                 1,
                 ('123.45.67.89', 12345),
                 ('213.54.76.98', 54321)
@@ -36,7 +36,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     def test_init_with_retries(self):
         rudp_packet = json.dumps(
-            packet.RUDPPacket(
+            packet.Packet(
                 1,
                 ('123.45.67.89', 12345),
                 ('213.54.76.98', 54321)
@@ -55,7 +55,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     def test_repr(self):
         rudp_packet = json.dumps(
-            packet.RUDPPacket(
+            packet.Packet(
                 1,
                 ('123.45.67.89', 12345),
                 ('213.54.76.98', 54321)
@@ -143,7 +143,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         pass
 
     def test_receive_fin_during_initial(self):
-        fin_rudp_packet = packet.RUDPPacket(
+        fin_rudp_packet = packet.Packet(
             0,
             self.con.own_addr,
             self.con.dest_addr,
@@ -158,7 +158,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
     def test_receive_syn_during_initial(self):
         remote_seqnum = 42
-        remote_syn_packet = packet.RUDPPacket(
+        remote_syn_packet = packet.Packet(
             remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
@@ -189,7 +189,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertGreater(synack_packet['sequence_number'], 0)
         self.assertLess(synack_packet['sequence_number'], 2**16)
 
-        expected_synack_packet = packet.RUDPPacket(
+        expected_synack_packet = packet.Packet(
             synack_packet['sequence_number'],
             self.con.dest_addr,
             self.con.own_addr,
@@ -201,7 +201,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
             self.assertEqual(json.loads(call[0][0]), expected_synack_packet)
             self.assertEqual(call[0][1], address)
 
-        expected_fin_packet = packet.RUDPPacket(
+        expected_fin_packet = packet.Packet(
             0,
             self.con.dest_addr,
             self.con.own_addr,
@@ -213,7 +213,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(m_calls[-1][0][1], address)
 
     def test_receive_synack_during_initial(self):
-        remote_synack_packet = packet.RUDPPacket(
+        remote_synack_packet = packet.Packet(
             42,
             self.con.own_addr,
             self.con.dest_addr,
@@ -225,7 +225,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertFalse(self.con.connected)
 
     def test_receive_normal_during_initial(self):
-        remote_normal_packet = packet.RUDPPacket(
+        remote_normal_packet = packet.Packet(
             42,
             self.con.own_addr,
             self.con.dest_addr,
@@ -270,7 +270,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertGreater(syn_packet['sequence_number'], 0)
         self.assertLess(syn_packet['sequence_number'], 2**16)
 
-        expected_syn_packet = packet.RUDPPacket(
+        expected_syn_packet = packet.Packet(
             syn_packet['sequence_number'],
             self.con.dest_addr,
             self.con.own_addr,
@@ -281,7 +281,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
             self.assertEqual(json.loads(call[0][0]), expected_syn_packet)
             self.assertEqual(call[0][1], address)
 
-        expected_fin_packet = packet.RUDPPacket(
+        expected_fin_packet = packet.Packet(
             0,
             self.con.dest_addr,
             self.con.own_addr,
@@ -306,14 +306,14 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         sent_syn_packet = json.loads(m_calls[0][0][0])
         seqnum = sent_syn_packet['sequence_number']
 
-        remote_synack_rudppacket = packet.RUDPPacket(
+        remote_synack_packet = packet.Packet(
             42,
             self.con.own_addr,
             self.con.dest_addr,
             ack=seqnum + 1,
             syn=True
         )
-        self.con.receive_packet(remote_synack_rudppacket)
+        self.con.receive_packet(remote_synack_packet)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -334,14 +334,14 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         sent_syn_packet = json.loads(m_calls[0][0][0])
         seqnum = sent_syn_packet['sequence_number']
 
-        remote_synack_rudppacket = packet.RUDPPacket(
+        remote_synack_packet = packet.Packet(
             42,
             self.con.own_addr,
             self.con.dest_addr,
             ack=seqnum + 800,
             syn=True
         )
-        self.con.receive_packet(remote_synack_rudppacket)
+        self.con.receive_packet(remote_synack_packet)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -351,7 +351,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
     def test_receive_fin_during_connecting(self):
         self._initial_to_connecting()
 
-        remote_fin_packet = packet.RUDPPacket(
+        remote_fin_packet = packet.Packet(
             0,
             self.con.own_addr,
             self.con.dest_addr,
@@ -373,7 +373,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.assertEqual(fin_call[0][1], self.con.relay_addr)
 
         local_fin_packet = json.loads(fin_call[0][0])
-        expected_fin_packet = packet.RUDPPacket(
+        expected_fin_packet = packet.Packet(
             0,
             self.con.dest_addr,
             self.con.own_addr,
@@ -389,7 +389,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
     # == Test HALF_CONNECTED state ==
     def _initial_to_half_connected(self):
         remote_seqnum = 42
-        remote_syn_packet = packet.RUDPPacket(
+        remote_syn_packet = packet.Packet(
             remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
@@ -443,7 +443,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
             constants.MAX_RETRANSMISSIONS
         )
 
-        expected_normal_packet = packet.RUDPPacket(
+        expected_normal_packet = packet.Packet(
             self.next_seqnum,
             self.con.dest_addr,
             self.con.own_addr,
@@ -484,7 +484,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.assertEqual(len(sent_normal_packets), 3)
         expected_normal_packets = tuple(
-            packet.RUDPPacket(
+            packet.Packet(
                 self.next_seqnum + i,
                 self.con.dest_addr,
                 self.con.own_addr,
@@ -504,7 +504,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.handler_mock.reset_mock()
 
-        remote_normal_packet = packet.RUDPPacket(
+        remote_normal_packet = packet.Packet(
             self.next_acknum,
             self.con.own_addr,
             self.con.dest_addr,
@@ -528,7 +528,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         payloads = ('a', 'b', 'c')
         remote_normal_packets = tuple(
-            packet.RUDPPacket(
+            packet.Packet(
                 self.next_acknum + i,
                 self.con.own_addr,
                 self.con.dest_addr,
@@ -559,7 +559,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
             'c' * constants.UDP_SAFE_SEGMENT_SIZE,
         )
         remote_normal_packets = tuple(
-            packet.RUDPPacket(
+            packet.Packet(
                 self.next_acknum + i,
                 self.con.own_addr,
                 self.con.dest_addr,
@@ -599,7 +599,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.handler_mock.reset_mock()
 
-        normal_rudp_packet = packet.RUDPPacket(
+        normal_rudp_packet = packet.Packet(
             self.next_seqnum,
             self.con.dest_addr,
             self.con.own_addr,

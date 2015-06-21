@@ -2,8 +2,8 @@
 Specification of RUDP packet structure.
 
 Classes:
-    RUDPPacket: An RUDP packet implementing a total ordering
-        and serializing to/from JSON.
+    Packet: An RUDP packet implementing a total ordering and
+        serializing to/from JSON.
 """
 
 import functools
@@ -88,7 +88,7 @@ RUDP_PACKET_JSON_SCHEMA = {
 
 
 @functools.total_ordering
-class RUDPPacket(object):
+class Packet(object):
 
     """An RUDP packet."""
 
@@ -134,13 +134,13 @@ class RUDPPacket(object):
         self.syn = syn
 
     def __eq__(self, other):
-        if isinstance(other, RUDPPacket):
+        if isinstance(other, Packet):
             return self.sequence_number == other.sequence_number
         else:
             return NotImplemented
 
     def __lt__(self, other):
-        if isinstance(other, RUDPPacket):
+        if isinstance(other, Packet):
             return self.sequence_number < other.sequence_number
         else:
             return NotImplemented
@@ -169,7 +169,7 @@ class RUDPPacket(object):
     @classmethod
     def from_unvalidated_json(cls, json_obj):
         """
-        Create an RUDPPacket from an unvalidated json_obj.
+        Create a Packet from an unvalidated json_obj.
 
         Args:
             json_obj: An RUDP packet in JSON format.
@@ -186,7 +186,7 @@ class RUDPPacket(object):
     @classmethod
     def from_validated_json(cls, json_obj):
         """
-        Create an RUDPPacket from a validated json_obj.
+        Create a Packet from a validated json_obj.
 
         Args:
             json_obj: An RUDP packet in JSON format.

@@ -25,7 +25,7 @@ class TestPacketAPI(unittest.TestCase):
         }
 
     def test_init_with_minimal_parametres(self):
-        p = packet.RUDPPacket(1, self.dest_addr, self.source_addr)
+        p = packet.Packet(1, self.dest_addr, self.source_addr)
         self.assertEqual(p.sequence_number, 1)
         self.assertEqual(p.dest_addr, self.dest_addr)
         self.assertEqual(p.source_addr, self.source_addr)
@@ -36,7 +36,7 @@ class TestPacketAPI(unittest.TestCase):
         self.assertFalse(p.syn)
 
     def test_init_with_all_parametres(self):
-        p = packet.RUDPPacket(
+        p = packet.Packet(
             sequence_number=1,
             dest_addr=self.dest_addr,
             source_addr=self.source_addr,
@@ -56,7 +56,7 @@ class TestPacketAPI(unittest.TestCase):
         self.assertTrue(p.syn)
 
     def _make_packet_with_seqnum(self, seqnum):
-        return packet.RUDPPacket(seqnum, self.dest_addr, self.source_addr)
+        return packet.Packet(seqnum, self.dest_addr, self.source_addr)
 
     def test_ordering(self):
         p1 = self._make_packet_with_seqnum(1)
@@ -86,7 +86,7 @@ class TestPacketAPI(unittest.TestCase):
         self.assertEqual(p.syn, json_obj['syn'])
 
     def test_to_json(self):
-        p = packet.RUDPPacket(
+        p = packet.Packet(
             sequence_number=1,
             dest_addr=self.dest_addr,
             source_addr=self.source_addr,
@@ -99,12 +99,12 @@ class TestPacketAPI(unittest.TestCase):
         self.assertEqual(p.to_json(), self.json_dict)
 
     def test_from_validated_json(self):
-        p = packet.RUDPPacket.from_validated_json(self.json_dict)
+        p = packet.Packet.from_validated_json(self.json_dict)
         self._assert_packet_equals_json(p, self.json_dict)
 
     def test_from_unvalidated_good_json(self):
         try:
-            p = packet.RUDPPacket.from_validated_json(self.json_dict)
+            p = packet.Packet.from_validated_json(self.json_dict)
         except Exception:
             self.fail('Unpacking valid JSON failed.')
         else:
@@ -112,7 +112,7 @@ class TestPacketAPI(unittest.TestCase):
 
     def _assert_json_fails_validation(self, json_obj):
         with self.assertRaises(jsonschema.ValidationError):
-            packet.RUDPPacket.from_unvalidated_json(json_obj)
+            packet.Packet.from_unvalidated_json(json_obj)
 
     def test_from_validated_bad_json_with_bad_sequence_number(self):
         bad_json = dict(self.json_dict)

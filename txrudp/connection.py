@@ -45,7 +45,7 @@ class RUDPConnection(object):
             Create a new scheduled packet.
 
             Args:
-                rudp_packet: An packet.RUDPPacket in string format.
+                rudp_packet: A packet.Packet in string format.
                 timeout: Seconds to wait before activating timeout_cb,
                     as an integer.
                 timeout_cb: Callback to invoke upon timer expiration;
@@ -142,12 +142,12 @@ class RUDPConnection(object):
 
         NOTE: It is guaranteed that this method will be called
         exactly once for each inbound packet, so it is the ideal
-        place to do pre- or post-processing of any RUDPPacket.
+        place to do pre- or post-processing of any Packet.
         Consider this when subclassing RUDPConnection.
 
         Args:
-            rudp_packet: Received packet.RUDPPacket; it is assumed
-                that the packet had already been validated against
+            rudp_packet: Received packet.Packet; it is assumed that
+                the packet has already been validated against
                 packet.RUDP_PACKET_JSON_SCHEMA.
         """
         if rudp_packet.fin:
@@ -246,7 +246,7 @@ class RUDPConnection(object):
         NOTE: Until successfully acknowledged, all outbound SYN(ACK)
         shall packets have the same (initial) sequence number.
         """
-        syn_packet = packet.RUDPPacket(
+        syn_packet = packet.Packet(
             self._next_sequence_number,
             self.dest_addr,
             self.own_addr,
@@ -265,7 +265,7 @@ class RUDPConnection(object):
         host's ACK number may have advanced in the meantime. Instead,
         each ACK timeout sends the latest ACK number available.
         """
-        ack_packet = packet.RUDPPacket(
+        ack_packet = packet.Packet(
             0,
             self.dest_addr,
             self.own_addr,
@@ -283,7 +283,7 @@ class RUDPConnection(object):
         cause the connection to be broken. Since the packet is sent
         out-of-order, there is no meaningful sequence number.
         """
-        fin_packet = packet.RUDPPacket(
+        fin_packet = packet.Packet(
             0,
             self.dest_addr,
             self.own_addr,
@@ -299,7 +299,7 @@ class RUDPConnection(object):
         Current implementation sends the packet as soon as possible.
 
         Args:
-            rudp_packet: The packet.RUDPPacket to be sent.
+            rudp_packet: The packet.Packet to be sent.
         """
         final_packet = self._finalize_packet(rudp_packet)
         self._proto.send_datagram(final_packet, self.relay_addr)
@@ -309,7 +309,7 @@ class RUDPConnection(object):
         Schedule a package to be sent and set the timeout timer.
 
         Args:
-            rudp_packet: The packet.RUDPPacket to be sent.
+            rudp_packet: The packet.Packet to be sent.
             timeout: The timeout for this packet type.
         """
         final_packet = self._finalize_packet(rudp_packet)
@@ -334,7 +334,7 @@ class RUDPConnection(object):
         assert self._segment_queue, 'Looping send active despite empty queue.'
         more_fragments, message = self._segment_queue.popleft()
 
-        rudp_packet = packet.RUDPPacket(
+        rudp_packet = packet.Packet(
             self._get_next_sequence_number(),
             self.dest_addr,
             self.own_addr,
@@ -348,15 +348,15 @@ class RUDPConnection(object):
 
     def _finalize_packet(self, rudp_packet):
         """
-        Convert an packet.RUDPPacket to a string.
+        Convert a packet.Packet to a string.
 
         NOTE: It is guaranteed that this method will be called
         exactly once for each outbound packet, so it is the ideal
-        place to do pre- or post-processing of any RUDPPacket.
+        place to do pre- or post-processing of any Packet.
         Consider this when subclassing RUDPConnection.
 
         Args:
-            rudp_packet: A packet.RUDPPacket
+            rudp_packet: A packet.Packet
 
         Returns:
             The JSON version of the packet, formatted as a string.
@@ -432,7 +432,7 @@ class RUDPConnection(object):
         last messages to handler.
 
         Args:
-            rudp_packet: A packet.RUDPPacket with FIN flag set.
+            rudp_packet: A packet.Packet with FIN flag set.
         """
         self.shutdown()
 
@@ -444,7 +444,7 @@ class RUDPConnection(object):
         established; ignore status of SYN flag.
 
         Args:
-            rudp_packet: A packet.RUDPPacket with FIN flag unset.
+            rudp_packet: A packet.Packet with FIN flag unset.
         """
         if rudp_packet.ack > 0 and self._sending_window:
             self._retire_packets_with_seqnum_up_to(rudp_packet.ack)
@@ -484,7 +484,7 @@ class RUDPConnection(object):
         being shutdown.
 
         Args:
-            rudp_packet: A packet.RUDPPacket with SYN flag set.
+            rudp_packet: A packet.Packet with SYN flag set.
         """
         if rudp_packet.ack > 0:
             # Prevent crash if malicious node initiates connection
@@ -588,7 +588,7 @@ class Handler(object):
         Receive a message from the given connection.
 
         Args:
-            message: The payload of an RUDPPacket, as a string.
+            message: The payload of a Packet, as a string.
         """
 
     @abc.abstractmethod

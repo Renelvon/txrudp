@@ -107,7 +107,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
         cm[self.addr1] = mock_connection
         datagram = json.dumps(
-            packet.RUDPPacket(
+            packet.Packet(
                 -1,  # Bad sequence number
                 ('123.45.67.89', 12345),
                 ('132.54.76.98', 54321)
@@ -130,7 +130,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
         source_addr = self.addr1
         datagram = json.dumps(
-            packet.RUDPPacket(1, (dest_ip, 12345), source_addr).to_json()
+            packet.Packet(1, (dest_ip, 12345), source_addr).to_json()
         )
 
         cm.datagramReceived(datagram, source_addr)
@@ -145,7 +145,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
         source_addr = self.addr1
         datagram = json.dumps(
-            packet.RUDPPacket(1, (dest_ip, 12345), source_addr).to_json()
+            packet.Packet(1, (dest_ip, 12345), source_addr).to_json()
         )
 
         cm.datagramReceived(datagram, source_addr)
@@ -162,7 +162,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
             source_addr
         )
         cm[source_addr] = mock_connection
-        rudp_packet = packet.RUDPPacket(
+        rudp_packet = packet.Packet(
             1,
             (self.public_ip, self.port),
             source_addr
@@ -177,7 +177,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm = self._make_connected_cm()
 
         source_addr = self.addr3
-        rudp_packet = packet.RUDPPacket(
+        rudp_packet = packet.Packet(
             1,
             (self.public_ip, self.port),
             source_addr
@@ -200,7 +200,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
         source_addr = self.addr3
         relay_addr = self.addr3
-        rudp_packet = packet.RUDPPacket(
+        rudp_packet = packet.Packet(
             1,
             (self.public_ip, self.port),
             source_addr
@@ -244,7 +244,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         transport = mock.Mock()
         cm = self._make_cm()
         cm.makeConnection(transport)
-        rudp_packet = packet.RUDPPacket(
+        rudp_packet = packet.Packet(
             1,
             ('132.54.76.98', 23456),
             (self.public_ip, self.port)

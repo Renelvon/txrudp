@@ -124,7 +124,7 @@ class ConnectionMultiplexer(
         """
         try:
             json_obj = json.loads(datagram)
-            rudp_packet = packet.RUDPPacket.from_unvalidated_json(json_obj)
+            rudp_packet = packet.Packet.from_unvalidated_json(json_obj)
         except (ValueError, TypeError):
             if self._logger is not None:
                 self._logger.info(

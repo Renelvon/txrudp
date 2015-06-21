@@ -36,7 +36,7 @@ class Heap(collections.Container, collections.Sized):
         Push a new packet in the heap.
 
         Args:
-            rudp_packet: A packet.RUDPPacket.
+            rudp_packet: A packet.Packet.
         """
         heapq.heappush(self._heap, rudp_packet)
         self._seqnum_set.add(rudp_packet.sequence_number)
@@ -56,7 +56,7 @@ class Heap(collections.Container, collections.Sized):
         popped from the heap and returned in order.
 
         Returns:
-            Tuple of packet.RUDPPackets, ordered by increasing seqnum,
+            Tuple of packet.Packet(s), ordered by increasing seqnum,
             or None if operation was unsuccessful for any reason.
         """
         if not self._heap:

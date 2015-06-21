@@ -11,7 +11,7 @@ class TestHeapAPI(unittest.TestCase):
 
     @staticmethod
     def _make_packet_with_seqnum(seqnum):
-        return packet.RUDPPacket(
+        return packet.Packet(
             seqnum,
             '123.45.67.89',
             12345,
