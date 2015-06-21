@@ -107,7 +107,7 @@ class TestConnectionAPI(unittest.TestCase):
         self.assertEqual(self.con.own_addr, self.own_addr)
         self.assertEqual(self.con.dest_addr, self.addr1)
         self.assertEqual(self.con.relay_addr, self.addr1)
-        self.assertFalse(self.con.connected)
+        self.assertEqual(self.con.state, connection.State.INITIAL)
 
         self.clock.advance(0)
 
@@ -124,7 +124,7 @@ class TestConnectionAPI(unittest.TestCase):
         self.assertEqual(con.own_addr, self.own_addr)
         self.assertEqual(con.dest_addr, self.addr1)
         self.assertEqual(con.relay_addr, self.addr2)
-        self.assertFalse(con.connected)
+        self.assertEqual(self.con.state, connection.State.INITIAL)
 
         self.clock.advance(0)
         con.shutdown()
@@ -166,7 +166,10 @@ class TestConnectionAPI(unittest.TestCase):
         )
 
         self.con.receive_packet(remote_syn_packet)
-        self.assertTrue(self.con.connected)
+        self.clock.advance(0)
+        connection.REACTOR.runUntilCurrent()
+        self.assertEqual(self.con.state, connection.State.HALF_CONNECTED)
+
         for _ in range(constants.MAX_RETRANSMISSIONS):
             # Each advance forces a SYNACK packet retransmission.
             self.clock.advance(constants.PACKET_TIMEOUT)
@@ -222,7 +225,7 @@ class TestConnectionAPI(unittest.TestCase):
         )
 
         self.con.receive_packet(remote_synack_packet)
-        self.assertFalse(self.con.connected)
+        self.assertEqual(self.con.state, connection.State.INITIAL)
 
     def test_receive_normal_during_initial(self):
         remote_normal_packet = packet.Packet(
@@ -236,7 +239,7 @@ class TestConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
-        self.assertFalse(self.con.connected)
+        self.assertEqual(self.con.state, connection.State.CONNECTING)
         self.handler_mock.receive_message.assert_not_called()
 
     # == Test CONNECTING state ==
@@ -325,7 +328,7 @@ class TestConnectionAPI(unittest.TestCase):
         self._initial_to_connecting()
         self._connecting_to_connected()
 
-        self.assertTrue(self.con.connected)
+        self.assertEqual(self.con.state, connection.State.CONNECTED)
 
     def test_receive_improper_synack_during_connecting(self):
         self._initial_to_connecting()
@@ -346,7 +349,7 @@ class TestConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
-        self.assertFalse(self.con.connected)
+        self.assertEqual(self.con.state, connection.State.CONNECTING)
 
     def test_receive_fin_during_connecting(self):
         self._initial_to_connecting()
