@@ -13,7 +13,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.spclass = connection.RUDPConnection.ScheduledPacket
+        cls.spclass = connection.Connection.ScheduledPacket
 
     def test_default_init(self):
         rudp_packet = json.dumps(
@@ -76,7 +76,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
         )
 
 
-class TestRUDPConnectionAPI(unittest.TestCase):
+class TestConnectionAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -92,7 +92,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
 
         self.proto_mock = mock.Mock(spec_set=rudp.ConnectionMultiplexer)
         self.handler_mock = mock.Mock(spec_set=connection.Handler)
-        self.con = connection.RUDPConnection(
+        self.con = connection.Connection(
             self.proto_mock,
             self.handler_mock,
             self.own_addr,
@@ -112,7 +112,7 @@ class TestRUDPConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
 
     def test_init_with_relay(self):
-        con = connection.RUDPConnection(
+        con = connection.Connection(
             self.proto_mock,
             self.handler_mock,
             self.own_addr,

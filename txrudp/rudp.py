@@ -33,7 +33,7 @@ class ConnectionMultiplexer(
         Args:
             connection_factory: The connection factory used to
                 instantiate new connections, as a
-                connection.RUDPConnectionFactory.
+                connection.ConnectionFactory.
             public_ip: The external IPv4/IPv6 this node publishes as its
                 reception address.
             relaying: If True, the multiplexer will silently forward
@@ -81,7 +81,7 @@ class ConnectionMultiplexer(
 
         Args:
             key: Tuple of destination address (ip, port).
-            value: The connection to register, as an RUDPConnection
+            value: The connection to register, as a Connection.
         """
         prev_con = self._active_connections.get(addr)
         if prev_con is not None:
@@ -159,7 +159,7 @@ class ConnectionMultiplexer(
             relay_addr: Remote host address, as a (ip, port) tuple.
 
         Returns:
-            A new connection.RUDPConnection
+            A new connection.Connection
         """
         con = self.connection_factory.make_new_connection(
             self,

@@ -20,7 +20,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cls.addr3 = ('231.76.45.89', 15243)
 
     def _make_cm(self):
-        cf = mock.Mock(spec_set=connection.RUDPConnectionFactory)
+        cf = mock.Mock(spec_set=connection.ConnectionFactory)
         return rudp.ConnectionMultiplexer(
             cf,
             self.public_ip,
@@ -57,15 +57,15 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
     def test_set_and_get_new_connection(self):
         cm = self._make_cm()
-        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection
         self.assertIn(self.addr1, cm)
         self.assertIs(cm[self.addr1], mock_connection)
 
     def test_set_existent_connection(self):
         cm = self._make_cm()
-        mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
-        mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection1 = mock.Mock(spec_set=connection.Connection)
+        mock_connection2 = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection1
         cm[self.addr1] = mock_connection2
         self.assertIn(self.addr1, cm)
@@ -81,22 +81,22 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
     def test_del_existent_connection(self):
         cm = self._make_cm()
-        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection
         del cm[self.addr1]
         self.assertNotIn(self.addr1, cm)
 
     def test_iter(self):
         cm = self._make_cm()
-        mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
-        mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection1 = mock.Mock(spec_set=connection.Connection)
+        mock_connection2 = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection1
         cm[self.addr2] = mock_connection2
         self.assertEqual(set(cm), {self.addr1, self.addr2})
 
     def test_receive_bad_json_datagram(self):
         cm = self._make_cm()
-        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection
         datagram = '!@#4noise%^&*'
         cm.datagramReceived(datagram, self.addr1)
@@ -104,7 +104,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
     def test_receive_bad_rudp_datagram(self):
         cm = self._make_cm()
-        mock_connection = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection
         datagram = json.dumps(
             packet.Packet(
@@ -259,8 +259,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
     def test_shutdown(self):
         cm = self._make_cm()
-        mock_connection1 = mock.Mock(spec_set=connection.RUDPConnection)
-        mock_connection2 = mock.Mock(spec_set=connection.RUDPConnection)
+        mock_connection1 = mock.Mock(spec_set=connection.Connection)
+        mock_connection2 = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection1
         cm[self.addr2] = mock_connection2
 

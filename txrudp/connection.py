@@ -2,8 +2,8 @@
 RUDP state machine implementation.
 
 Classes:
-    RUDPConnection: Endpoint of an RUDP connection
-    RUDPConnectionFactory: Creator of RUDPConnections.
+    Connection: Endpoint of an RUDP connection
+    ConnectionFactory: Creator of Connections.
 """
 
 import abc
@@ -24,7 +24,7 @@ State = enum.Enum(
     ('INITIAL', 'CONNECTING', 'HALF_CONNECTED', 'CONNECTED', 'SHUTDOWN')
 )
 
-class RUDPConnection(object):
+class Connection(object):
 
     """
     A virtual connection over UDP.
@@ -143,7 +143,7 @@ class RUDPConnection(object):
         NOTE: It is guaranteed that this method will be called
         exactly once for each inbound packet, so it is the ideal
         place to do pre- or post-processing of any Packet.
-        Consider this when subclassing RUDPConnection.
+        Consider this when subclassing Connection.
 
         Args:
             rudp_packet: Received packet.Packet; it is assumed that
@@ -353,7 +353,7 @@ class RUDPConnection(object):
         NOTE: It is guaranteed that this method will be called
         exactly once for each outbound packet, so it is the ideal
         place to do pre- or post-processing of any Packet.
-        Consider this when subclassing RUDPConnection.
+        Consider this when subclassing Connection.
 
         Args:
             rudp_packet: A packet.Packet
@@ -571,7 +571,7 @@ class Handler(object):
     """
     Abstract base class for handler objects.
 
-    Each RUDPConnection should be linked to one such object.
+    Each Connection should be linked to one such object.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -611,17 +611,17 @@ class HandlerFactory(object):
         """Create a new handler."""
 
 
-class RUDPConnectionFactory(object):
+class ConnectionFactory(object):
 
     """
-    A factory for RUDPConnections.
+    A factory for Connections.
 
     Subclass according to need.
     """
 
     def __init__(self, handler_factory):
         """
-        Create a new RUDPConnectionFactory.
+        Create a new ConnectionFactory.
 
         Args:
             handler_factory: An instance of a HandlerFactory,
@@ -637,7 +637,7 @@ class RUDPConnectionFactory(object):
         relay_addr
     ):
         """
-        Create a new RUDPConnection.
+        Create a new Connection.
 
         In addition, create a handler and attach the connection to it.
         """
@@ -646,7 +646,7 @@ class RUDPConnectionFactory(object):
             source_addr,
             relay_addr
         )
-        connection = RUDPConnection(
+        connection = Connection(
             proto_handle,
             handler,
             own_addr,
