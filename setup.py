@@ -11,7 +11,7 @@ _HERE = path.abspath(path.dirname(__file__))
 with codecs.open(path.join(_HERE, 'README.md'), encoding='utf-8') as f:
     _LONG_DESCRIPTION = f.read()
 
-requirements = ('jsonschema', 'twisted')
+requirements = ['jsonschema', 'twisted']
 python_version = sys.version_info
 if python_version.major < 3 or python_version.minor < 4:
     requirements.append('enum34')
