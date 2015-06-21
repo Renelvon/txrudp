@@ -37,8 +37,8 @@ setup(
     packages=('txrudp'),
     install_requires=('jsonschema', 'twisted'),
     extras_require={
-        ':python_version<="3.4"': ('argparse',),
-        'dev': ('coverage', 'mock', 'nose', 'prospector')
+        ':python_version<="3.4"': ('argparse',)
     },
+    tests_require=('coverage', 'nose', 'mock'),
     zip_safe=False
 )
