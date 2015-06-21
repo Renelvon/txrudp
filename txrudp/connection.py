@@ -91,10 +91,10 @@ class Connection(object):
         else:
             self.relay_addr = self._Address(*relay_addr)
 
-        self.connected = False
-
         self.handler = handler
+
         self._proto = proto
+        self._state = State.INITIAL
 
         self._next_sequence_number = random.randrange(1, 2**16 - 1)
         self._next_expected_seqnum = 0
@@ -108,13 +108,18 @@ class Connection(object):
         self._looping_receive = task.LoopingCall(self._pop_received_packet)
 
         # Initiate SYN sequence after receiving any pending SYN message.
-        self._syn_handle = REACTOR.callLater(0, self._wake_up)
+        REACTOR.callLater(0, self._wake_up)
 
         # Setup and immediately cancel the ACK loop; it should only
         # be activated once the connection is in CONNECTED state.
         # However, initializing here helps avoiding `is None` checks.
         self._ack_handle = REACTOR.callLater(1, self._send_ack)
         self._ack_handle.cancel()
+
+    @property
+    def state(self):
+        """Get the current state."""
+        return self._state
 
     def send_message(self, message):
         """
@@ -150,14 +155,30 @@ class Connection(object):
                 the packet has already been validated against
                 packet.RUDP_PACKET_JSON_SCHEMA.
         """
+        if self._state == State.SHUTDOWN:
+            # A SHUTDOWN connection shall not process any packet
+            # whatsoever. In particular, it shall not be revived via a
+            # SYN packet.
+            return
+
         if rudp_packet.fin:
-            if self.connected or not self._syn_handle.active():
+            # Disallow processing of inbound FIN packets in INITIAL
+            # state; such a packet looks like a DoS attack.
+            if not self._state == State.INITIAL:
                 self._process_fin_packet(rudp_packet)
         elif rudp_packet.syn:
-            if not self.connected:
+            # Reject SYN messages in CONNECTED state.
+            if self._state in (
+                State.INITIAL,
+                State.CONNECTING,
+                State.HALF_CONNECTED
+            ):
                 self._process_syn_packet(rudp_packet)
-        elif self.connected:
-            self._process_casual_packet(rudp_packet)
+        else:  # casual packet
+            # Reject inbound casual packets until remote endpoint
+            # has sent SYNACK.
+            if self._state == State.CONNECTED:
+                self._process_casual_packet(rudp_packet)
 
     def shutdown(self):
         """
@@ -172,7 +193,7 @@ class Connection(object):
         any future messages. The simplest way to do this is to
         remove the connection from the protocol.
         """
-        self.connected = False
+        self._state = State.SHUTDOWN
 
         self._send_fin()
         self._cancel_ack_timeout()
@@ -208,8 +229,8 @@ class Connection(object):
         Enable dequeuing if a packet can be scheduled immediately.
         """
         if (
-            self.connected and
             not self._looping_send.running and
+            self._state in (State.HALF_CONNECTED, State.CONNECTED) and
             len(self._sending_window) < constants.WINDOW_SIZE and
             len(self._segment_queue)
         ):
@@ -245,6 +266,10 @@ class Connection(object):
         the INITIAL state (i.e before the first outbound SYN packet
         is created).
         """
+        if self._next_expected_seqnum > 0:
+            self._state = State.HALF_CONNECTED
+        else:
+            self._state = State.CONNECTING
         self._send_syn()
 
     def _send_syn(self):
@@ -498,21 +523,25 @@ class Connection(object):
             rudp_packet: A packet.Packet with SYN flag set.
         """
         if rudp_packet.ack > 0:
-            # Prevent crash if malicious node initiates connection
-            # with SYNACK message.
-            if not self._sending_window:
+            # Reject SYNACK packet while in INITIAL state, as malicious.
+            if self._state == State.INITIAL:
                 return
             lowest_seqnum = tuple(self._sending_window.keys())[0]
             if rudp_packet.ack == lowest_seqnum + 1:
-                sch_packet = self._sending_window.pop(lowest_seqnum)
-                sch_packet.timeout_cb.cancel()
-                self.connected = True
+                self._state = State.CONNECTED
+                self._retire_scheduled_packet_with_seqnum(lowest_seqnum)
                 self._attempt_enabling_looping_send()
         else:
-            self._clear_sending_window()
-            if not self._syn_handle.active():
+            if self._state == State.HALF_CONNECTED:
+                # If SYN received while in HALF_CONNECTED, it is
+                # either a repeat, or malicious; do not process.
+                return
+            elif self._state == State.CONNECTING:
+                # Clear pending SYN packets and send SYNACK packets
+                # with the *same* seqnum.
+                self._clear_sending_window()
+                self._state = State.HALF_CONNECTED
                 self._send_syn()
-            self.connected = True
 
         if self._next_expected_seqnum <= rudp_packet.sequence_number:
             self._next_expected_seqnum = rudp_packet.sequence_number + 1
@@ -548,8 +577,8 @@ class Connection(object):
     def _attempt_enabling_looping_receive(self):
         """Activate looping receive."""
         if (
-            self.connected and
             not self._looping_receive.running and
+            self._state == State.CONNECTED and
             self._receive_heap
         ):
             self._looping_receive.start(0, now=True)
