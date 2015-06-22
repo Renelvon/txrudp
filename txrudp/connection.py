@@ -19,10 +19,7 @@ from txrudp import constants, heap, packet
 
 REACTOR = reactor
 
-State = enum.Enum(
-    'State',
-    ('INITIAL', 'CONNECTING', 'HALF_CONNECTED', 'CONNECTED', 'SHUTDOWN')
-)
+State = enum.Enum('State', ('CONNECTING', 'CONNECTED', 'SHUTDOWN'))
 
 class Connection(object):
 
@@ -94,7 +91,7 @@ class Connection(object):
         self.handler = handler
 
         self._proto = proto
-        self._state = State.INITIAL
+        self._state = State.CONNECTING
 
         self._next_sequence_number = random.randrange(1, 2**16 - 1)
         self._next_expected_seqnum = 0
@@ -108,7 +105,7 @@ class Connection(object):
         self._looping_receive = task.LoopingCall(self._pop_received_packet)
 
         # Initiate SYN sequence after receiving any pending SYN message.
-        REACTOR.callLater(0, self._wake_up)
+        REACTOR.callLater(0, self._send_syn)
 
         # Setup and immediately cancel the ACK loop; it should only
         # be activated once the connection is in CONNECTED state.
@@ -137,13 +134,9 @@ class Connection(object):
 
     def receive_packet(self, rudp_packet):
         """
-        Called by protocol when a packet arrives for this connection.
-
         Process received packet and update connection state.
 
-        Silently drop any non-SYN packet if we are disconnected.
-        Silently drop any FIN packet if we haven't yet attempted to
-        connect.
+        Called by protocol when a packet arrives for this connection.
 
         NOTE: It is guaranteed that this method will be called
         exactly once for each inbound packet, so it is the ideal
@@ -162,21 +155,11 @@ class Connection(object):
             return
 
         if rudp_packet.fin:
-            # Disallow processing of inbound FIN packets in INITIAL
-            # state; such a packet looks like a DoS attack.
-            if not self._state == State.INITIAL:
-                self._process_fin_packet(rudp_packet)
+            self._process_fin_packet(rudp_packet)
         elif rudp_packet.syn:
-            # Reject SYN messages in CONNECTED state.
-            if self._state in (
-                State.INITIAL,
-                State.CONNECTING,
-                State.HALF_CONNECTED
-            ):
+            if self._state == State.CONNECTING:
                 self._process_syn_packet(rudp_packet)
-        else:  # casual packet
-            # Reject inbound casual packets until remote endpoint
-            # has sent SYNACK.
+        else:
             if self._state == State.CONNECTED:
                 self._process_casual_packet(rudp_packet)
 
@@ -230,7 +213,7 @@ class Connection(object):
         """
         if (
             not self._looping_send.running and
-            self._state in (State.HALF_CONNECTED, State.CONNECTED) and
+            self._state == State.CONNECTED and
             len(self._sending_window) < constants.WINDOW_SIZE and
             len(self._segment_queue)
         ):
@@ -257,30 +240,12 @@ class Connection(object):
         self._next_sequence_number += 1
         return self._next_sequence_number
 
-    def _wake_up(self):
-        """
-        Compete initialization of connection.
-
-        This code will be executed after the first reactor loop
-        iteration, to allow SYN packets to be received during
-        the INITIAL state (i.e before the first outbound SYN packet
-        is created).
-        """
-        if self._next_expected_seqnum > 0:
-            self._state = State.HALF_CONNECTED
-        else:
-            self._state = State.CONNECTING
-        self._send_syn()
-
     def _send_syn(self):
         """
         Create and schedule the initial SYN packet.
 
         The current ACK number is included; if it is greater than
         0, then this actually is a SYNACK packet.
-
-        NOTE: Until successfully acknowledged, all outbound SYN(ACK)
-        shall packets have the same (initial) sequence number.
         """
         syn_packet = packet.Packet(
             self._next_sequence_number,
@@ -460,6 +425,18 @@ class Connection(object):
                 sch_packet.timeout_cb.cancel()
         self._sending_window.clear()
 
+    def _process_ack_packet(self, rudp_packet):
+        """
+        Process the ACK field on a received pacekt.
+
+        Args:
+            rudp_packet: A packet.Packet with positive ACK field.
+        """
+        if self._sending_window:
+            self._retire_packets_with_seqnum_up_to(
+                min(rudp_packet.ack, self._next_sequence_number + 1)
+            )
+
     def _process_fin_packet(self, rudp_packet):
         """
         Process a received FIN packet.
@@ -483,16 +460,16 @@ class Connection(object):
             rudp_packet: A packet.Packet with FIN flag unset.
         """
         if rudp_packet.ack > 0:
-            self._retire_packets_with_seqnum_up_to(rudp_packet.ack)
+            self._process_ack_packet(rudp_packet)
 
-        if rudp_packet.sequence_number >= self._next_expected_seqnum:
-            self._receive_heap.push(rudp_packet)
-            if rudp_packet.sequence_number == self._next_expected_seqnum:
-                self._next_expected_seqnum += 1
-                self._attempt_enabling_looping_receive()
-
-        if rudp_packet.sequence_number > 0:
+        seqnum = rudp_packet.sequence_number
+        if seqnum > 0:
             self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
+            if seqnum >= self._next_expected_seqnum:
+                self._receive_heap.push(rudp_packet)
+                if seqnum == self._next_expected_seqnum:
+                    self._next_expected_seqnum += 1
+                    self._attempt_enabling_looping_receive()
 
     def _process_syn_packet(self, rudp_packet):
         """
@@ -502,52 +479,17 @@ class Connection(object):
         been established; thus ignore any payload.
 
         We use double handshake and consider the connection to the
-        remote endpoint established upon either:
-            a. Sending a SYNACK packet. If the local host is already
-            sending SYN packets, it shall stop doing so and start
-            sending SYNACK packets.
-            b. Receiving a SYNACK packet ACKing the seqnum of the
-            outstanding SYN packet. Careful analysis shows that if
-            not both endpoints see the connection as established, at
-            least one will keep sending such a packet. Once that
-            packet has been successfully received, both endpoints will
-            consider the connection as established.
-
-        Once an endpoint considers the connection established, it stops
-        processing SYN flags on inbound packets. Past that point, any
-        outstanding SYN(ACK) packets should be ACKed by subsequent
-        casual packets or bare ACK packets. Failure to do so is
-        considered breach of protocol and will lead to connection
-        being shutdown.
+        remote endpoint established upon receiving a SYN packet.
 
         Args:
             rudp_packet: A packet.Packet with SYN flag set.
         """
-        if rudp_packet.ack > 0:
-            # Reject SYNACK packet while in INITIAL state, as malicious.
-            if self._state == State.INITIAL:
-                return
-            lowest_seqnum = tuple(self._sending_window.keys())[0]
-            if rudp_packet.ack == lowest_seqnum + 1:
-                self._state = State.CONNECTED
-                self._retire_scheduled_packet_with_seqnum(lowest_seqnum)
-                self._attempt_enabling_looping_send()
-            self._update_next_expected_seqnum(rudp_packet.sequence_number)
-        else:
-            if self._state == State.HALF_CONNECTED:
-                # If SYN received while in HALF_CONNECTED, it is
-                # either a repeat, or malicious; do not process.
-                return
-            elif self._state == State.CONNECTING:
-                # Clear pending SYN packets and send SYNACK packets
-                # with the *same* seqnum.
-                self._clear_sending_window()
-                self._state = State.HALF_CONNECTED
-                self._update_next_expected_seqnum(rudp_packet.sequence_number)
-                self._send_syn()
-                self._attempt_enabling_looping_send()
-            elif self._state == State.INITIAL:
-                self._update_next_expected_seqnum(rudp_packet.sequence_number)
+        if self.rudp_packet.ack > 0:
+            self._process_ack_packet(rudp_packet)
+
+        self._update_next_expected_seqnum(rudp_packet.sequence_number)
+        self._state = State.CONNECTED
+        self._attempt_enabling_looping_send()
 
     def _update_next_expected_seqnum(self, seqnum):
         if self._next_expected_seqnum <= seqnum:
@@ -563,12 +505,10 @@ class Connection(object):
         """
         if not self._sending_window:
             return
-        lowest_seqnum = tuple(self._sending_window.keys())[0]
-        acknum = min(acknum, self._next_sequence_number)
-        for seqnum in range(lowest_seqnum, acknum):
-            self._retire_scheduled_packet_with_seqnum(seqnum)
-
-        if lowest_seqnum < acknum:
+        lowest_seqnum = min(self._sending_window.keys())
+        if acknum >= lowest_seqnum:
+            for seqnum in range(lowest_seqnum, acknum):
+                self._retire_scheduled_packet_with_seqnum(seqnum)
             self._attempt_enabling_looping_send()
 
     def _retire_scheduled_packet_with_seqnum(self, seqnum):
