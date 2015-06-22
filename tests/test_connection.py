@@ -177,55 +177,6 @@ class TestConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
         self.assertEqual(self.con.state, connection.State.HALF_CONNECTED)
 
-        for _ in range(constants.MAX_RETRANSMISSIONS):
-            # Each advance forces a SYNACK packet retransmission.
-            self.clock.advance(constants.PACKET_TIMEOUT)
-
-        # Force transmission of FIN packet and shutdown.
-        self.clock.advance(constants.PACKET_TIMEOUT)
-
-        # Trap any calls after shutdown.
-        self.clock.advance(100 * constants.PACKET_TIMEOUT)
-        connection.REACTOR.runUntilCurrent()
-
-    def test_send_syn_during_connecting(self):
-        self._initial_to_connecting()
-        self._advance_to_fin()
-
-        m_calls = self.proto_mock.send_datagram.call_args_list
-        self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
-
-        first_synack_call = m_calls[0]
-        synack_packet = json.loads(first_synack_call[0][0])
-        address = first_synack_call[0][1]
-
-        self.assertEqual(address, self.con.relay_addr)
-        self.assertGreater(synack_packet['sequence_number'], 0)
-        self.assertLess(synack_packet['sequence_number'], 2**16)
-
-        expected_synack_packet = packet.Packet(
-            synack_packet['sequence_number'],
-            self.con.dest_addr,
-            self.con.own_addr,
-            ack=remote_seqnum + 1,
-            syn=True,
-        ).to_json()
-
-        for call in m_calls[:-1]:
-            self.assertEqual(json.loads(call[0][0]), expected_synack_packet)
-            self.assertEqual(call[0][1], address)
-
-        expected_fin_packet = packet.Packet(
-            0,
-            self.con.dest_addr,
-            self.con.own_addr,
-            ack=remote_seqnum + 1,
-            fin=True
-        ).to_json()
-
-        self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
-        self.assertEqual(m_calls[-1][0][1], address)
-
     def test_receive_synack_during_initial(self):
         remote_synack_packet = packet.Packet(
             42,
@@ -419,6 +370,47 @@ class TestConnectionAPI(unittest.TestCase):
 
         self.next_seqnum = seqnum + 1
         self.next_acknum = acknum + 1
+
+    def test_send_synack_during_half_connected(self):
+        self._initial_to_half_connected()
+        self._advance_to_fin()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+        self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
+
+        first_synack_call = m_calls[0]
+        synack_packet = json.loads(first_synack_call[0][0])
+        address = first_synack_call[0][1]
+
+        self.assertEqual(address, self.con.relay_addr)
+        self.assertGreater(synack_packet['sequence_number'], 0)
+        self.assertLess(synack_packet['sequence_number'], 2**16)
+
+        expected_synack_packet = packet.Packet(
+            synack_packet['sequence_number'],
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=self.next_acknum - 1,
+            syn=True,
+        ).to_json()
+
+        for call in m_calls[:-1]:
+            self.assertEqual(json.loads(call[0][0]), expected_synack_packet)
+            self.assertEqual(call[0][1], address)
+
+        expected_fin_packet = packet.Packet(
+            0,
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=self.next_acknum - 1,
+            fin=True
+        ).to_json()
+
+        self.assertEqual(json.loads(m_calls[-1][0][0]), expected_fin_packet)
+        self.assertEqual(m_calls[-1][0][1], address)
+
+    def test_receive_normal_packet_during_half_connected(self):
+        pass
 
     def test_send_normal_message_during_half_connected(self):
         self._initial_to_half_connected()
