@@ -694,3 +694,4 @@ class ConnectionFactory(object):
             relay_addr
         )
         handler.connection = connection
+        return connection
