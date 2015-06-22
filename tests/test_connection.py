@@ -160,6 +160,9 @@ class TestConnectionAPI(unittest.TestCase):
         self.assertEqual(self.con.state, connection.State.CONNECTING)
         self.handler_mock.handle_shutdown.assert_not_called()
 
+    def test_receive_ack_during_initial(self):
+        pass
+
     def test_receive_syn_during_initial(self):
         remote_seqnum = 42
         remote_syn_packet = packet.Packet(
@@ -184,6 +187,10 @@ class TestConnectionAPI(unittest.TestCase):
         # Trap any calls after shutdown.
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
+
+    def test_send_syn_during_connecting(self):
+        self._initial_to_connecting()
+        self._advance_to_fin()
 
         m_calls = self.proto_mock.send_datagram.call_args_list
         self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
@@ -252,9 +259,7 @@ class TestConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
-    def test_send_syn_during_connecting(self):
-        self._initial_to_connecting()
-
+    def _advance_to_fin(self):
         for _ in range(constants.MAX_RETRANSMISSIONS):
             # Each advance forces a SYN packet retransmission.
             self.clock.advance(constants.PACKET_TIMEOUT)
@@ -300,8 +305,8 @@ class TestConnectionAPI(unittest.TestCase):
 
     def test_send_normal_during_connecting(self):
         self._initial_to_connecting()
-
         self.proto_mock.reset_mock()
+
         self.con.send_message('Yellow Submarine')
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -599,6 +604,9 @@ class TestConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
         self.proto_mock.send_datagram.assert_not_called()
+
+    def test_receive_syn_during_shutdown(self):
+        pass
 
     def test_receive_normal_during_shutdown(self):
         self._initial_to_connecting()
