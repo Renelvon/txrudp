@@ -34,11 +34,12 @@ setup(
         'Topic :: System :: Networking'
     ),
     keywords='rudp twisted reliable',
-    packages=('txrudp'),
+    packages=('txrudp', 'tests'),
     install_requires=('jsonschema', 'twisted'),
     extras_require={
         'python_version<=3.4': ('argparse',)
     },
     tests_require=('coverage', 'nose', 'mock'),
+    test_suite='tests',
     zip_safe=False
 )
