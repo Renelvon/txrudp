@@ -569,25 +569,37 @@ class TestConnectionAPI(unittest.TestCase):
         )
 
     # == Test SHUTDOWN state ==
+
     def test_send_normal_during_shutdown(self):
         self._initial_to_connecting()
         self._connecting_to_connected()
+        self.con.shutdown()
 
         self.proto_mock.reset_mock()
-
         self.con.send_message("Yellow Submarine")
 
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
 
+        self.assertEqual(self.con.state, connection.State.SHUTDOWN)
         self.proto_mock.send_datagram.assert_not_called()
 
     def test_receive_syn_during_shutdown(self):
         pass
 
+    def test_receive_synack_during_shutdown(self):
+        pass
+
+    def test_receive_ack_during_shutdown(self):
+        pass
+
+    def test_receive_fin_during_shutdown(self):
+        pass
+
     def test_receive_normal_during_shutdown(self):
         self._initial_to_connecting()
         self._connecting_to_connected()
+        self.con.shutdown()
 
         self.handler_mock.reset_mock()
 
@@ -603,4 +615,5 @@ class TestConnectionAPI(unittest.TestCase):
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
 
+        self.assertEqual(self.con.state, connection.State.SHUTDOWN)
         self.handler_mock.receive_message.assert_not_called()
