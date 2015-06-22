@@ -10,13 +10,13 @@ standard about RUDP (RFCs, etc).
 
 Resources
 ---------
--  `Original node.js library <https://github.com/shovon/node-rudp>`
--  `Original port to Python <https://github.com/hoffmabc/python-rudp>`
+-  `Original node.js library <https://github.com/shovon/node-rudp>`__
+-  `Original port to Python <https://github.com/hoffmabc/python-rudp>`__
 
 License
 -------
 
-txrudp is released under the `MIT License <LICENSE>`.
+txrudp is released under the `MIT License <LICENSE>`__.
 
 .. |Build Status| image:: https://travis-ci.org/Renelvon/txrudp.svg?branch=master
    :target: https://travis-ci.org/Renelvon/txrudp
