@@ -491,7 +491,8 @@ class Connection(object):
                 self._next_expected_seqnum += 1
                 self._attempt_enabling_looping_receive()
 
-        self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
+        if rudp_packet.sequence_number > 0:
+            self._reset_ack_timeout(constants.BARE_ACK_TIMEOUT)
 
     def _process_syn_packet(self, rudp_packet):
         """
