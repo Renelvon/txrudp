@@ -157,6 +157,7 @@ class TestConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
+        self.assertEqual(self.con.state, connection.State.CONNECTING)
         self.handler_mock.handle_shutdown.assert_not_called()
 
     def test_receive_syn_during_initial(self):
