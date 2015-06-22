@@ -485,7 +485,7 @@ class Connection(object):
         if rudp_packet.ack > 0 and self._sending_window:
             self._retire_packets_with_seqnum_up_to(rudp_packet.ack)
 
-        if rudp_packet.sequence_number > 0:
+        if rudp_packet.sequence_number >= self._next_expected_seqnum:
             self._receive_heap.push(rudp_packet)
             if rudp_packet.sequence_number == self._next_expected_seqnum:
                 self._next_expected_seqnum += 1
