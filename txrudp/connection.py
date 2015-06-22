@@ -482,7 +482,7 @@ class Connection(object):
         Args:
             rudp_packet: A packet.Packet with FIN flag unset.
         """
-        if rudp_packet.ack > 0 and self._sending_window:
+        if rudp_packet.ack > 0:
             self._retire_packets_with_seqnum_up_to(rudp_packet.ack)
 
         if rudp_packet.sequence_number >= self._next_expected_seqnum:
