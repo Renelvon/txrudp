@@ -222,6 +222,10 @@ class TestConnectionAPI(unittest.TestCase):
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
 
+    def test_send_syn_during_connecting(self):
+        self._initial_to_connecting()
+        self._advance_to_fin()
+
         m_calls = self.proto_mock.send_datagram.call_args_list
         self.assertEqual(len(m_calls), constants.MAX_RETRANSMISSIONS + 1)
 
@@ -323,33 +327,14 @@ class TestConnectionAPI(unittest.TestCase):
         self.proto_mock.reset_mock()
         self.con.receive_packet(remote_fin_packet)
 
-        # Trap any calls after shutdown.
-        self.clock.advance(100 * constants.PACKET_TIMEOUT)
-        connection.REACTOR.runUntilCurrent()
-
+        self.assertEqual(self.con.state, connection.State.SHUTDOWN)
         self.handler_mock.handle_shutdown.assert_called_once_with()
-
-        m_calls = self.proto_mock.send_datagram.call_args_list
-        self.assertEqual(len(m_calls), 1)
-
-        fin_call = m_calls[0]
-        self.assertEqual(fin_call[0][1], self.con.relay_addr)
-
-        local_fin_packet = json.loads(fin_call[0][0])
-        expected_fin_packet = packet.Packet(
-            0,
-            self.con.dest_addr,
-            self.con.own_addr,
-            ack=local_fin_packet['ack'],
-            fin=True,
-        ).to_json()
-
-        self.assertEqual(local_fin_packet, expected_fin_packet)
 
     def test_receive_normal_during_connecting(self):
         pass
 
     # == Test HALF_CONNECTED state ==
+
     def _initial_to_half_connected(self):
         remote_seqnum = 42
         remote_syn_packet = packet.Packet(
