@@ -531,6 +531,7 @@ class Connection(object):
                 self._state = State.CONNECTED
                 self._retire_scheduled_packet_with_seqnum(lowest_seqnum)
                 self._attempt_enabling_looping_send()
+            self._update_next_expected_seqnum(rudp_packet.sequence_number)
         else:
             if self._state == State.HALF_CONNECTED:
                 # If SYN received while in HALF_CONNECTED, it is
@@ -543,9 +544,12 @@ class Connection(object):
                 self._state = State.HALF_CONNECTED
                 self._send_syn()
                 self._attempt_enabling_looping_send()
+            elif self._state == State.INITIAL:
+                self._update_next_expected_seqnum(rudp_packet.sequence_number)
 
-        if self._next_expected_seqnum <= rudp_packet.sequence_number:
-            self._next_expected_seqnum = rudp_packet.sequence_number + 1
+    def _update_next_expected_seqnum(self, seqnum):
+        if self._next_expected_seqnum <= seqnum:
+            self._next_expected_seqnum = seqnum + 1
 
     def _retire_packets_with_seqnum_up_to(self, acknum):
         """
@@ -600,9 +604,7 @@ class Connection(object):
             self._attempt_disabling_looping_receive()
         else:
             last_seqnum = fragments[-1].sequence_number
-            if self._next_expected_seqnum <= last_seqnum:
-                self._next_expected_seqnum = last_seqnum + 1
-
+            self._update_next_expected_seqnum(last_seqnum)
             payload = ''.join(f.payload for f in fragments)
             self.handler.receive_message(payload)
 
