@@ -542,6 +542,7 @@ class Connection(object):
                 self._clear_sending_window()
                 self._state = State.HALF_CONNECTED
                 self._send_syn()
+                self._attempt_enabling_looping_send()
 
         if self._next_expected_seqnum <= rudp_packet.sequence_number:
             self._next_expected_seqnum = rudp_packet.sequence_number + 1
