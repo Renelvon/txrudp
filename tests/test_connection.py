@@ -140,7 +140,10 @@ class TestConnectionAPI(unittest.TestCase):
         self.assertEqual(json.loads(m_calls[0][0][0])['payload'], '')
 
     def test_shutdown_during_initial(self):
-        pass
+        self.con.shutdown()
+
+        self.assertEqual(self.con.state, connection.State.SHUTDOWN)
+        self.handler_mock.handle_shutdown.assert_called_once_with()
 
     def test_receive_fin_during_initial(self):
         fin_rudp_packet = packet.Packet(
