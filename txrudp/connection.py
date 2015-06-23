@@ -95,6 +95,7 @@ class Connection(object):
 
         self._next_sequence_number = random.randrange(2**16 - 2)
         self._next_expected_seqnum = 0
+        self._next_delivered_seqnum = 0
 
         self._segment_queue = collections.deque()
         self._sending_window = collections.OrderedDict()
@@ -489,12 +490,17 @@ class Connection(object):
             self._process_ack_packet(rudp_packet)
 
         self._update_next_expected_seqnum(rudp_packet.sequence_number)
+        self._update_next_delivered_seqnum(rudp_packet.sequence_number)
         self._state = State.CONNECTED
         self._attempt_enabling_looping_send()
 
     def _update_next_expected_seqnum(self, seqnum):
         if self._next_expected_seqnum <= seqnum:
             self._next_expected_seqnum = seqnum + 1
+
+    def _update_next_delivered_seqnum(self, seqnum):
+        if self._next_delivered_seqnum <= seqnum:
+            self._next_delivered_seqnum = seqnum + 1
 
     def _retire_packets_with_seqnum_up_to(self, acknum):
         """
@@ -548,10 +554,11 @@ class Connection(object):
         else:
             last_seqnum = fragments[-1].sequence_number
             self._update_next_expected_seqnum(last_seqnum)
+            self._update_next_delivered_seqnum(last_seqnum)
             payload = ''.join(f.payload for f in fragments)
             self.handler.receive_message(payload)
 
-            if self._next_expected_seqnum not in self._receive_heap:
+            if self._next_delivered_seqnum not in self._receive_heap:
                 self._attempt_disabling_looping_receive()
 
 
