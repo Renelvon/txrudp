@@ -484,7 +484,7 @@ class Connection(object):
         Args:
             rudp_packet: A packet.Packet with SYN flag set.
         """
-        if self.rudp_packet.ack > 0:
+        if rudp_packet.ack > 0:
             self._process_ack_packet(rudp_packet)
 
         self._update_next_expected_seqnum(rudp_packet.sequence_number)
