@@ -93,7 +93,7 @@ class Connection(object):
         self._proto = proto
         self._state = State.CONNECTING
 
-        self._next_sequence_number = random.randrange(1, 2**16 - 1)
+        self._next_sequence_number = random.randrange(2**16 - 2)
         self._next_expected_seqnum = 0
 
         self._segment_queue = collections.deque()
@@ -236,9 +236,10 @@ class Connection(object):
             self._looping_send.stop()
 
     def _get_next_sequence_number(self):
-        """Return the next available sequence number."""
+        """Return-then-increment the next available sequence number."""
+        cur = self._next_sequence_number
         self._next_sequence_number += 1
-        return self._next_sequence_number
+        return cur
 
     def _send_syn(self):
         """
@@ -248,7 +249,7 @@ class Connection(object):
         0, then this actually is a SYNACK packet.
         """
         syn_packet = packet.Packet(
-            self._next_sequence_number,
+            self._get_next_sequence_number(),
             self.dest_addr,
             self.own_addr,
             ack=self._next_expected_seqnum,
@@ -427,14 +428,14 @@ class Connection(object):
 
     def _process_ack_packet(self, rudp_packet):
         """
-        Process the ACK field on a received pacekt.
+        Process the ACK field on a received packet.
 
         Args:
             rudp_packet: A packet.Packet with positive ACK field.
         """
         if self._sending_window:
             self._retire_packets_with_seqnum_up_to(
-                min(rudp_packet.ack, self._next_sequence_number + 1)
+                min(rudp_packet.ack, self._next_sequence_number)
             )
 
     def _process_fin_packet(self, rudp_packet):
