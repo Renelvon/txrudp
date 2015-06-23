@@ -551,6 +551,9 @@ class Connection(object):
             payload = ''.join(f.payload for f in fragments)
             self.handler.receive_message(payload)
 
+            if self._next_expected_seqnum not in self._receive_heap:
+                self._attempt_disabling_looping_receive()
+
 
 class Handler(object):
 
