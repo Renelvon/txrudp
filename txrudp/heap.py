@@ -38,8 +38,9 @@ class Heap(collections.Container, collections.Sized):
         Args:
             rudp_packet: A packet.Packet.
         """
-        heapq.heappush(self._heap, rudp_packet)
-        self._seqnum_set.add(rudp_packet.sequence_number)
+        if rudp_packet.sequence_number not in self._seqnum_set:
+            heapq.heappush(self._heap, rudp_packet)
+            self._seqnum_set.add(rudp_packet.sequence_number)
 
     def _pop_min(self):
         """Pop the packet at the top of the heap."""
