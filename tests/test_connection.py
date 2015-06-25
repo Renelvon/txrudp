@@ -352,6 +352,44 @@ class TestConnectionAPI(unittest.TestCase):
 
         self.assertEqual(sent_casual_packets, expected_casual_packets)
 
+    def test_send_ack_during_connected(self):
+        self._connecting_to_connected()
+
+        remote_casual_packet = packet.Packet(
+            self.next_remote_seqnum,
+            self.con.own_addr,
+            self.con.dest_addr,
+            payload='Yellow Submarine',
+            ack=self.next_seqnum
+        )
+        self.con.receive_packet(remote_casual_packet)
+
+        self.clock.advance(constants.BARE_ACK_TIMEOUT)
+        connection.REACTOR.runUntilCurrent()
+
+        m_calls = self.proto_mock.send_datagram.call_args_list
+
+        # Filter bare ACK packets.
+        sent_packets = tuple(
+            json.loads(call[0][0])
+            for call in self.proto_mock.send_datagram.call_args_list
+        )
+        sent_bare_ack_packets = tuple(
+            sent_packet
+            for sent_packet in sent_packets
+            if sent_packet['ack'] > 0 and not sent_packet['payload']
+        )
+
+        self.assertEqual(len(sent_bare_ack_packets), 1)
+        expected_bare_ack_packet = packet.Packet(
+            0,
+            self.con.dest_addr,
+            self.con.own_addr,
+            ack=self.next_remote_seqnum + 1,
+        ).to_json()
+
+        self.assertEqual(sent_bare_ack_packets[0], expected_bare_ack_packet)
+
     def test_receive_casual_packet_during_connected(self):
         self._connecting_to_connected()
 
