@@ -8,7 +8,7 @@ from setuptools import setup
 
 
 _HERE = path.abspath(path.dirname(__file__))
-with codecs.open(path.join(_HERE, 'README.md'), encoding='utf-8') as f:
+with codecs.open(path.join(_HERE, 'README.rst'), encoding='utf-8') as f:
     _LONG_DESCRIPTION = f.read()
 
 setup(
