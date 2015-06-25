@@ -25,7 +25,7 @@ setup(
         'Framework :: Twisted',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: Implementation :: CPython',
@@ -33,7 +33,7 @@ setup(
     ),
     keywords='rudp twisted reliable',
     packages=('txrudp', 'tests'),
-    install_requires=('enum34', 'protobuf', 'twisted'),
+    install_requires=('enum34', 'protobuf', 'pynacl', 'twisted'),
     tests_require=('coverage', 'nose', 'mock'),
     test_suite='tests',
     zip_safe=False
