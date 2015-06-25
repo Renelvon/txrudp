@@ -11,6 +11,7 @@ import collections
 import enum
 import random
 
+from nacl import exceptions, public, utils
 from twisted.internet import reactor, task
 
 from txrudp import constants, heap, packet
@@ -569,6 +570,95 @@ class Connection(object):
 
             if self._next_delivered_seqnum not in self._receive_heap:
                 self._attempt_disabling_looping_receive()
+
+
+class CryptoConnection(Connection):
+
+    """An encrypted RUDP connection."""
+
+    def __init__(self, proto, handler, own_addr, dest_addr, relay_addr=None):
+        """
+        Create a new connection and register it with the protocol.
+
+        Args:
+            proto: Handler to underlying protocol.
+            handler: Upstream recipient of received messages and
+                handler of other events. Should minimally implement
+                `receive_message` and `handle_shutdown`.
+            own_addr: Tuple of local host address (ip, port).
+            dest_addr: Tuple of remote host address (ip, port).
+            relay_addr: Tuple of relay host address (ip, port).
+
+        If a relay address is specified, all outgoing packets are
+        sent to that adddress, but the packets contain the address
+        of their final destination. This is used for routing.
+        """
+        self._secret_key = public.PrivateKey.generate()
+        self._public_key = self._secret_key.public_key
+        self._crypto_box = None
+
+        super(CryptoConnection, self).__init__(
+            proto, handler, own_addr, dest_addr, relay_addr
+        )
+
+
+    def _finalize_packet(self, rudp_packet):
+        """
+        Convert a packet.Packet to a string and consider crypto stuff.
+
+        If it is a SYN packet, attach the public key; otherwise,
+        encrypt the payload.
+
+        Args:
+            rudp_packet: A packet.Packet
+
+        Returns:
+            The JSON version of the packet, formatted as a string.
+        """
+        if rudp_packet.syn:
+            if not rudp_packet.payload:
+                rudp_packet.payload = self._public_key
+        else:
+            nonce = utils.random(self._crypto_box,NONCE_SIZE)
+            encrypted_payload = self._crypto_box.encrypt(payload, nonce)
+            rudp_packet.payload = encrypted_payload
+
+        return super(CryptoConnection, self)._finalize_packet(rudp_packet)
+
+
+    def receive_packet(self, rudp_packet):
+        """
+        Process received packet and update connection state.
+
+        For non-SYN packets, ensure packet is successfully decrypted
+        before processing any further; for SYN packets, try to create
+        a crypto box by combining the remote public key and the local
+        private key.
+
+        Args:
+            rudp_packet: Received packet.Packet; it is assumed that
+                the packet has already been validated against
+                packet.RUDP_PACKET_JSON_SCHEMA.
+        """
+        if rudp_packet.syn:
+            if self._crypto_box is None:
+                try:
+                    crypto_box = public.Box(
+                        self._secret_key,
+                        rudp_packet.payload
+                    )
+                except exceptions.CryptoError:
+                    pass
+                else:
+                    self._crypto_box = crypto_box
+        else:
+            try:
+                plaintext = self._crypto_box.decrypt(rudp_packet.payload)
+            except (exceptions.CryptoError, exceptions.BadSignatureError)
+                pass
+            else:
+                rudp_packet.payload = plaintext
+                super(CryptoConnection, self).receive_packet(rudp_packet)
 
 
 class Handler(object):
