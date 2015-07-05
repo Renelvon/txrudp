@@ -37,7 +37,7 @@ setup(
     packages=('txrudp', 'tests'),
     install_requires=('jsonschema', 'protobuf', 'twisted'),
     extras_require={
-        'python_version<=3.4': ('argparse',)
+        'python_version<=3.4': ('enum34',)
     },
     tests_require=('coverage', 'nose', 'mock'),
     test_suite='tests',
