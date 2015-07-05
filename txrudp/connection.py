@@ -187,6 +187,19 @@ class Connection(object):
 
         self.handler.handle_shutdown()
 
+    def unregister(self):
+        """
+        Remove this connection from the protocol.
+
+        This should be called only after the connection is
+        SHUTDOWN. Note that shutting down the connection will
+        *not* automatically remove the connection from the
+        protocol, to prevent a malicious remote node from
+        creating and destroying connections endlessly.
+        """
+        assert self.state == State.SHUTDOWN
+        del self._proto[self.own_addr]
+
     @staticmethod
     def _gen_segments(message):
         """
