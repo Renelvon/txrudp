@@ -41,8 +41,9 @@ class Packet(object):
         """Create a new empty Packet."""
         self._packet = packet_pb2.Packet()
 
-    def populate(
-        self,
+    @classmethod
+    def from_data(
+        cls,
         sequence_number,
         dest_addr,
         source_addr,
@@ -53,8 +54,7 @@ class Packet(object):
         syn=False,
     ):
         """
-        Populate the Packet with the given fields. This will
-        overwrite eny existing values.
+        Create a Packet with the given fields.
 
         Args:
             seqnum: The packet's sequence number, as an int.
@@ -70,20 +70,30 @@ class Packet(object):
             fin: When True, signals that this packet ends the connection.
             syn: When True, signals the start of a new conenction.
 
+        Return:
+            An initialized Packet.
+
+        Raises:
+            TypeError: Some assignment failed due to value being
+                of inappropriate type.
+
         NOTE: The destination address may not be the address of the
         first recipient of this packet in case where the recipient is
-        a mediator node relaying packet (e.g. for NAT punching).
+        a mediator node relaying packets (e.g. for NAT punching).
         """
-        self.syn = syn
-        self.fin = fin
-        self.sequence_number = sequence_number
-        self.more_fragments = more_fragments
-        self.ack = ack
+        new_packet = cls()
+        new_packet.syn = syn
+        new_packet.fin = fin
+        new_packet.sequence_number = sequence_number
+        new_packet.more_fragments = more_fragments
+        new_packet.ack = ack
 
-        self.payload = payload
+        new_packet.payload = payload
 
-        self.dest_addr = dest_addr
-        self.source_addr = source_addr
+        new_packet.dest_addr = dest_addr
+        new_packet.source_addr = source_addr
+
+        return new_packet
 
     def to_bytes(self):
         """
