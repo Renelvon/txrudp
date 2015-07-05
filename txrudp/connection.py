@@ -9,7 +9,6 @@ Classes:
 import abc
 import collections
 import enum
-import json
 import random
 
 from twisted.internet import reactor, task
@@ -145,9 +144,7 @@ class Connection(object):
         Consider this when subclassing Connection.
 
         Args:
-            rudp_packet: Received packet.Packet; it is assumed that
-                the packet has already been validated against
-                packet.RUDP_PACKET_JSON_SCHEMA.
+            rudp_packet: Received packet.Packet.
         """
         if self._state == State.SHUTDOWN:
             # A SHUTDOWN connection shall not process any packet
@@ -262,7 +259,7 @@ class Connection(object):
         The current ACK number is included; if it is greater than
         0, then this actually is a SYNACK packet.
         """
-        syn_packet = packet.Packet(
+        syn_packet = packet.Packet.from_data(
             self._get_next_sequence_number(),
             self.dest_addr,
             self.own_addr,
@@ -281,7 +278,7 @@ class Connection(object):
         host's ACK number may have advanced in the meantime. Instead,
         each ACK timeout sends the latest ACK number available.
         """
-        ack_packet = packet.Packet(
+        ack_packet = packet.Packet.from_data(
             0,
             self.dest_addr,
             self.own_addr,
@@ -299,7 +296,7 @@ class Connection(object):
         cause the connection to be broken. Since the packet is sent
         out-of-order, there is no meaningful sequence number.
         """
-        fin_packet = packet.Packet(
+        fin_packet = packet.Packet.from_data(
             0,
             self.dest_addr,
             self.own_addr,
@@ -350,7 +347,7 @@ class Connection(object):
         assert self._segment_queue, 'Looping send active despite empty queue.'
         more_fragments, message = self._segment_queue.popleft()
 
-        rudp_packet = packet.Packet(
+        rudp_packet = packet.Packet.from_data(
             self._get_next_sequence_number(),
             self.dest_addr,
             self.own_addr,
@@ -364,7 +361,7 @@ class Connection(object):
 
     def _finalize_packet(self, rudp_packet):
         """
-        Convert a packet.Packet to a string.
+        Convert a packet.Packet to bytes.
 
         NOTE: It is guaranteed that this method will be called
         exactly once for each outbound packet, so it is the ideal
@@ -375,10 +372,9 @@ class Connection(object):
             rudp_packet: A packet.Packet
 
         Returns:
-            The JSON version of the packet, formatted as a string.
+            The protobuf-encoded version of the packet, as bytes.
         """
-        json_packet = rudp_packet.to_json()
-        return json.dumps(json_packet)
+        return rudp_packet.to_bytes()
 
     def _do_send_packet(self, seqnum):
         """
