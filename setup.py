@@ -35,7 +35,7 @@ setup(
     ),
     keywords='rudp twisted reliable',
     packages=('txrudp', 'tests'),
-    install_requires=('jsonschema', 'twisted'),
+    install_requires=('jsonschema', 'protobuf', 'twisted'),
     extras_require={
         'python_version<=3.4': ('argparse',)
     },
