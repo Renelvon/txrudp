@@ -33,10 +33,7 @@ setup(
     ),
     keywords='rudp twisted reliable',
     packages=('txrudp', 'tests'),
-    install_requires=('jsonschema', 'protobuf', 'twisted'),
-    extras_require={
-        'python_version<=3.4': ('enum34',)
-    },
+    install_requires=('enum34', 'protobuf', 'twisted'),
     tests_require=('coverage', 'nose', 'mock'),
     test_suite='tests',
     zip_safe=False
