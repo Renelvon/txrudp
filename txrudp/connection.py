@@ -195,7 +195,7 @@ class Connection(object):
         creating and destroying connections endlessly.
         """
         assert self.state == State.SHUTDOWN
-        del self._proto[self.own_addr]
+        del self._proto[self.dest_addr]
 
     @staticmethod
     def _gen_segments(message):
