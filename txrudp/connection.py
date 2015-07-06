@@ -126,7 +126,7 @@ class Connection(object):
         it is first segmented appropriately.
 
         Args:
-            message: The message to be sent, as a string.
+            message: The message to be sent, as bytes.
         """
         for segment in self._gen_segments(message):
             self._segment_queue.append(segment)
