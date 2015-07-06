@@ -10,3 +10,5 @@ pylint:
         - invalid-name
 pyroma:
     run: true
+ignore-patterns:
+    - packet_pb2.py

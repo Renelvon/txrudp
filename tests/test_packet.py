@@ -1,6 +1,6 @@
 import unittest
 
-import jsonschema
+import six
 
 from txrudp import packet
 
@@ -11,21 +11,9 @@ class TestPacketAPI(unittest.TestCase):
     def setUpClass(cls):
         cls.dest_addr = ('123.45.67.89', 12345)
         cls.source_addr = ('132.45.67.89', 54321)
-        cls.json_dict = {
-            'sequence_number': 1,
-            'dest_ip': cls.dest_addr[0],
-            'dest_port': cls.dest_addr[1],
-            'source_ip': cls.source_addr[0],
-            'source_port': cls.source_addr[1],
-            'payload': 'Yellow submarine',
-            'more_fragments': 4,
-            'ack': 28,
-            'fin': True,
-            'syn': True
-        }
 
-    def test_init_with_minimal_parametres(self):
-        p = packet.Packet(1, self.dest_addr, self.source_addr)
+    def test_from_data_with_minimal_parametres(self):
+        p = packet.Packet.from_data(1, self.dest_addr, self.source_addr)
         self.assertEqual(p.sequence_number, 1)
         self.assertEqual(p.dest_addr, self.dest_addr)
         self.assertEqual(p.source_addr, self.source_addr)
@@ -35,12 +23,12 @@ class TestPacketAPI(unittest.TestCase):
         self.assertFalse(p.fin)
         self.assertFalse(p.syn)
 
-    def test_init_with_all_parametres(self):
-        p = packet.Packet(
+    def test_from_data_with_all_parametres(self):
+        p = packet.Packet.from_data(
             sequence_number=1,
             dest_addr=self.dest_addr,
             source_addr=self.source_addr,
-            payload='Yellow submarine',
+            payload=b'Yellow submarine',
             more_fragments=4,
             ack=28,
             fin=True,
@@ -49,14 +37,14 @@ class TestPacketAPI(unittest.TestCase):
         self.assertEqual(p.sequence_number, 1)
         self.assertEqual(p.dest_addr, self.dest_addr)
         self.assertEqual(p.source_addr, self.source_addr)
-        self.assertEqual(p.payload, 'Yellow submarine')
+        self.assertEqual(p.payload, b'Yellow submarine')
         self.assertEqual(p.more_fragments, 4)
         self.assertEqual(p.ack, 28)
         self.assertTrue(p.fin)
         self.assertTrue(p.syn)
 
     def _make_packet_with_seqnum(self, seqnum):
-        return packet.Packet(seqnum, self.dest_addr, self.source_addr)
+        return packet.Packet.from_data(seqnum, self.dest_addr, self.source_addr)
 
     def test_ordering(self):
         p1 = self._make_packet_with_seqnum(1)
@@ -73,20 +61,18 @@ class TestPacketAPI(unittest.TestCase):
         self.assertGreaterEqual(p1, p1)
         self.assertLessEqual(p1, p1)
 
-    def _assert_packet_equals_json(self, p, json_obj):
-        self.assertEqual(p.sequence_number, json_obj['sequence_number'])
-        self.assertEqual(p.dest_addr[0], json_obj['dest_ip'])
-        self.assertEqual(p.dest_addr[1], json_obj['dest_port'])
-        self.assertEqual(p.source_addr[0], json_obj['source_ip'])
-        self.assertEqual(p.source_addr[1], json_obj['source_port'])
-        self.assertEqual(p.payload, json_obj['payload'])
-        self.assertEqual(p.more_fragments, json_obj['more_fragments'])
-        self.assertEqual(p.ack, json_obj['ack'])
-        self.assertEqual(p.fin, json_obj['fin'])
-        self.assertEqual(p.syn, json_obj['syn'])
+    def _assert_packets_entirely_equal(self, p1, p2):
+        self.assertEqual(p1.sequence_number, p2.sequence_number)
+        self.assertEqual(p1.dest_addr, p2.dest_addr)
+        self.assertEqual(p1.source_addr, p2.source_addr)
+        self.assertEqual(p1.payload, p2.payload)
+        self.assertEqual(p1.more_fragments, p2.more_fragments)
+        self.assertEqual(p1.ack, p2.ack)
+        self.assertEqual(p1.fin, p2.fin)
+        self.assertEqual(p1.syn, p2.syn)
 
-    def test_to_json(self):
-        p = packet.Packet(
+    def test_serialization_and_deserialization(self):
+        p1 = packet.Packet.from_data(
             sequence_number=1,
             dest_addr=self.dest_addr,
             source_addr=self.source_addr,
@@ -96,143 +82,48 @@ class TestPacketAPI(unittest.TestCase):
             fin=True,
             syn=True
         )
-        self.assertEqual(p.to_json(), self.json_dict)
+        bytes1 = p1.to_bytes()
+        self.assertIsInstance(bytes1, six.binary_type)
 
-    def test_from_validated_json(self):
-        p = packet.Packet.from_validated_json(self.json_dict)
-        self._assert_packet_equals_json(p, self.json_dict)
+        p2 = packet.Packet.from_bytes(bytes1)
+        self._assert_packets_entirely_equal(p1, p2)
 
-    def test_from_unvalidated_good_json(self):
-        try:
-            p = packet.Packet.from_validated_json(self.json_dict)
-        except Exception:
-            self.fail('Unpacking valid JSON failed.')
-        else:
-            self._assert_packet_equals_json(p, self.json_dict)
+    def _assert_packet_fails_validation(self, rudp_packet):
+        with self.assertRaises(packet.ValidationError):
+            packet.Packet.validate(rudp_packet)
 
-    def _assert_json_fails_validation(self, json_obj):
-        with self.assertRaises(jsonschema.ValidationError):
-            packet.Packet.from_unvalidated_json(json_obj)
+    def test_validate_with_bad_dest_ip(self):
+        p = packet.Packet.from_data(1, self.dest_addr, self.source_addr)
 
-    def test_from_validated_bad_json_with_bad_sequence_number(self):
-        bad_json = dict(self.json_dict)
+        p.dest_addr = ('127.0', 1)
+        self._assert_packet_fails_validation(p)
 
-        bad_json['sequence_number'] = -1
-        self._assert_json_fails_validation(bad_json)
+        p.dest_addr = ('FE80:0000:0000::z:B3FF:FE1E:8329', 1)
+        self._assert_packet_fails_validation(p)
 
-        bad_json['sequence_number'] = 3.4
-        self._assert_json_fails_validation(bad_json)
+    def test_validate_with_bad_dest_port(self):
+        p = packet.Packet.from_data(1, self.dest_addr, self.source_addr)
 
-        del bad_json['sequence_number']
-        self._assert_json_fails_validation(bad_json)
+        p.dest_addr = ('127.0.0.1', 0)
+        self._assert_packet_fails_validation(p)
 
-    def test_from_validated_bad_json_with_bad_dest_ip(self):
-        bad_json = dict(self.json_dict)
+        p.dest_addr = ('127.0.0.1', 65536)
+        self._assert_packet_fails_validation(p)
 
-        bad_json['dest_ip'] = 42
-        self._assert_json_fails_validation(bad_json)
+    def test_validate_with_bad_source_ip(self):
+        p = packet.Packet.from_data(1, self.source_addr, self.source_addr)
 
-        bad_json['dest_ip'] = '127.0'
-        self._assert_json_fails_validation(bad_json)
+        p.source_addr = ('127.0', 1)
+        self._assert_packet_fails_validation(p)
 
-        bad_json['dest_ip'] = 'FE80:0000:0000::z:B3FF:FE1E:8329'
-        self._assert_json_fails_validation(bad_json)
+        p.source_addr = ('FE80:0000:0000::z:B3FF:FE1E:8329', 1)
+        self._assert_packet_fails_validation(p)
 
-        del bad_json['dest_ip']
-        self._assert_json_fails_validation(bad_json)
+    def test_validate_with_bad_source_port(self):
+        p = packet.Packet.from_data(1, self.source_addr, self.source_addr)
 
-    def test_from_validated_bad_json_with_bad_dest_port(self):
-        bad_json = dict(self.json_dict)
+        p.source_addr = ('127.0.0.1', 0)
+        self._assert_packet_fails_validation(p)
 
-        bad_json['dest_port'] = 3.4
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['dest_port'] = 0
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['dest_port'] = 65536
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['dest_port']
-        self._assert_json_fails_validation(bad_json)
-
-    def test_from_validated_bad_json_with_bad_source_ip(self):
-        bad_json = dict(self.json_dict)
-
-        bad_json['source_ip'] = 42
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['source_ip'] = '127.0'
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['source_ip'] = 'FE80:0000:0000:z::B3FF:FE1E:8329'
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['source_ip']
-        self._assert_json_fails_validation(bad_json)
-
-    def test_from_validated_bad_json_with_bad_source_port(self):
-        bad_json = dict(self.json_dict)
-
-        bad_json['source_port'] = 3.4
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['source_port'] = 0
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['source_port'] = 65536
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['source_port']
-        self._assert_json_fails_validation(bad_json)
-
-    def test_from_validated_bad_json_with_bad_payload(self):
-        bad_json = dict(self.json_dict)
-
-        bad_json['payload'] = 42
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['payload']
-        self._assert_json_fails_validation(bad_json)
-
-    def test_from_validated_bad_json_with_bad_more_fragments(self):
-        bad_json = dict(self.json_dict)
-
-        bad_json['more_fragments'] = 3.4
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['more_fragments'] = -1
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['more_fragments']
-        self._assert_json_fails_validation(bad_json)
-
-    def test_from_validated_bad_json_with_bad_ack(self):
-        bad_json = dict(self.json_dict)
-
-        bad_json['ack'] = 3.4
-        self._assert_json_fails_validation(bad_json)
-
-        bad_json['ack'] = -1
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['ack']
-        self._assert_json_fails_validation(bad_json)
-
-    def test_from_validated_bad_json_with_bad_fin(self):
-        bad_json = dict(self.json_dict)
-
-        bad_json['fin'] = 42
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['fin']
-        self._assert_json_fails_validation(bad_json)
-
-    def test_from_validated_bad_json_with_bad_syn(self):
-        bad_json = dict(self.json_dict)
-
-        bad_json['syn'] = 42
-        self._assert_json_fails_validation(bad_json)
-
-        del bad_json['syn']
-        self._assert_json_fails_validation(bad_json)
+        p.source_addr = ('127.0.0.1', 65536)
+        self._assert_packet_fails_validation(p)

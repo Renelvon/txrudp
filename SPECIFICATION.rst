@@ -5,83 +5,31 @@ General
 
 Packet structure
 ----------------
-An *RUDP packet* is a JSON object that follows the schema described in the ``txrudp/packet.py`` and repeated here for reference. Conformant implementations of the ``txrudp`` protocol MUST reject (silently or not) any packet that violates the said schema. During transmission, the JSON packet SHOULD be encoded as a string; the order of the fields does not matter, so long the receiver can successfully decode the packet using a JSON decoder; the builtin decoder inside Python's ``json`` package SHOULD be able to decode the packet successfully.
+An *RUDP packet* is a Python object that can be serialized and deserialized using the protobuf spec described in ``txrudp/packet.proto`` and repeated here for reference. Conformant implementations of the ``txrudp`` protocol MUST reject (silently or not) any packet that violates the said spec. During transmission, the packet SHOULD be encoded using protobuf. Ports and IP fields SHOULD conform to standard requirements. IPv6 addreses are allowed.
 
 ::
 
-    _IPV4_REGEX = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+    syntax = "proto2";
 
-    # For now, only standard (non-compressed) IPv6 addresses are
-    # supported. This might change in the future.
-    _IPV6_REGEX = r'^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$'
+    package txrudp;
 
-    RUDP_PACKET_JSON_SCHEMA = {
-        '$schema': 'http://json-schema.org/schema#',
-        'id': 'RUDP_PACKET_JSON_SCHEMA',
-        'type': 'object',
-        'properties': {
-            'sequence_number': {
-                'type': 'integer',
-                'minimum': 0
-            },
-            'dest_ip': {
-                'anyOf': [
-                    {'type': 'string', 'pattern': _IPV4_REGEX},
-                    {'type': 'string', 'pattern': _IPV6_REGEX}
-                ]
-            },
-            'dest_port': {
-                'type': 'integer',
-                'minimum': 1,
-                'maximum': 65535
-            },
-            'source_ip': {
-                'anyOf': [
-                    {'type': 'string', 'pattern': _IPV4_REGEX},
-                    {'type': 'string', 'pattern': _IPV6_REGEX}
-                ]
-            },
-            'source_port': {
-                'type': 'integer',
-                'minimum': 1,
-                'maximum': 65535
-            },
-            'payload': {
-                'type': 'string',
-                'default': ''
-            },
-            'more_fragments': {
-                'type': 'integer',
-                'minimum': 0,
-                'default': 0
-            },
-            'ack': {
-                'type': 'integer',
-                'minimum': 0,
-                'default': 0
-            },
-            'fin': {
-                'type': 'boolean',
-                'default': False
-            },
-            'syn': {
-                'type': 'boolean',
-                'default': False
-            },
-        },
-        'additionalProperties': False,
-        'required': [
-            'sequence_number',
-            'dest_ip',
-            'dest_port',
-            'source_ip',
-            'source_port',
-            'payload',
-            'ack',
-            'fin',
-            'syn',
-            'more_fragments'
-        ],
+    option optimize_for = LITE_RUNTIME;
+
+    message Packet {
+        optional bool syn = 1;
+        optional bool fin = 2;
+
+        optional uint64 sequence_number = 3;
+        optional uint64 more_fragments = 4;
+        optional uint64 ack = 5;
+
+        optional bytes payload = 6;
+
+        required string dest_ip = 7;
+        required uint32 dest_port = 8;
+
+        required string source_ip = 9;
+        required uint32 source_port = 10;
     }
 
 ::

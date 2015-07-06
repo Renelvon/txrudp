@@ -1,9 +1,8 @@
 """Reliable UDP implementation using Twisted."""
 
 import collections
-import json
 
-import jsonschema
+from google.protobuf import message
 from twisted.internet import protocol
 
 from txrudp import packet
@@ -123,14 +122,13 @@ class ConnectionMultiplexer(
                 be relayed through the specified relay address.
         """
         try:
-            json_obj = json.loads(datagram)
-            rudp_packet = packet.Packet.from_unvalidated_json(json_obj)
-        except (ValueError, TypeError):
+            rudp_packet = packet.Packet.from_bytes(datagram)
+        except (message.DecodeError, TypeError, ValueError):
             if self._logger is not None:
                 self._logger.info(
-                    'Bad packet (bad JSON format): {0}'.format(datagram)
+                    'Bad packet (bad protobuf format): {0}'.format(datagram)
                 )
-        except jsonschema.ValidationError:
+        except packet.ValidationError:
             if self._logger is not None:
                 self._logger.info(
                     'Bad packet (invalid RUDP packet): {0}'.format(datagram)

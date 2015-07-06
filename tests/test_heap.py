@@ -11,12 +11,10 @@ class TestHeapAPI(unittest.TestCase):
 
     @staticmethod
     def _make_packet_with_seqnum(seqnum):
-        return packet.Packet(
+        return packet.Packet.from_data(
             seqnum,
-            '123.45.67.89',
-            12345,
-            '98.76.54.32',
-            54321
+            ('123.45.67.89', 12345),
+            ('98.76.54.32', 54321)
         )
 
     def test_push(self):

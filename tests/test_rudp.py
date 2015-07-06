@@ -1,5 +1,4 @@
 import collections
-import json
 import logging
 import unittest
 
@@ -94,7 +93,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm[self.addr2] = mock_connection2
         self.assertEqual(set(cm), {self.addr1, self.addr2})
 
-    def test_receive_bad_json_datagram(self):
+    def test_receive_bad_protobuf_datagram(self):
         cm = self._make_cm()
         mock_connection = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection
@@ -106,13 +105,12 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm = self._make_cm()
         mock_connection = mock.Mock(spec_set=connection.Connection)
         cm[self.addr1] = mock_connection
-        datagram = json.dumps(
-            packet.Packet(
-                -1,  # Bad sequence number
-                ('123.45.67.89', 12345),
-                ('132.54.76.98', 54321)
-            ).to_json()
-        )
+        datagram = packet.Packet.from_data(
+            1,
+            ('127.0.0.1', 2**20),  # Bad port value
+            self.addr1
+        ).to_bytes()
+
         cm.datagramReceived(datagram, self.addr1)
         mock_connection.receive_packet.assert_not_called()
 
@@ -129,9 +127,11 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
         source_addr = self.addr1
-        datagram = json.dumps(
-            packet.Packet(1, (dest_ip, 12345), source_addr).to_json()
-        )
+        datagram = packet.Packet.from_data(
+            1,
+            (dest_ip, 12345),
+            source_addr
+        ).to_bytes()
 
         cm.datagramReceived(datagram, source_addr)
         self.assertNotIn((dest_ip, 12345), cm)
@@ -144,9 +144,11 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
         dest_ip = '231.54.67.89'  # not the same as self.public_ip
         source_addr = self.addr1
-        datagram = json.dumps(
-            packet.Packet(1, (dest_ip, 12345), source_addr).to_json()
-        )
+        datagram = packet.Packet.from_data(
+            1,
+            (dest_ip, 12345),
+            source_addr
+        ).to_bytes()
 
         cm.datagramReceived(datagram, source_addr)
         self.assertNotIn((dest_ip, 12345), cm)
@@ -162,12 +164,12 @@ class TestConnectionManagerAPI(unittest.TestCase):
             source_addr
         )
         cm[source_addr] = mock_connection
-        rudp_packet = packet.Packet(
+        rudp_packet = packet.Packet.from_data(
             1,
             (self.public_ip, self.port),
             source_addr
         )
-        datagram = json.dumps(rudp_packet.to_json())
+        datagram = rudp_packet.to_bytes()
 
         cm.datagramReceived(datagram, source_addr)
         cm.connection_factory.make_new_connection.assert_not_called()
@@ -177,12 +179,12 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm = self._make_connected_cm()
 
         source_addr = self.addr3
-        rudp_packet = packet.Packet(
+        rudp_packet = packet.Packet.from_data(
             1,
             (self.public_ip, self.port),
             source_addr
         )
-        datagram = json.dumps(rudp_packet.to_json())
+        datagram = rudp_packet.to_bytes()
 
         cm.datagramReceived(datagram, source_addr)
         cm.connection_factory.make_new_connection.assert_called_once_with(
@@ -200,12 +202,12 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
         source_addr = self.addr3
         relay_addr = self.addr3
-        rudp_packet = packet.Packet(
+        rudp_packet = packet.Packet.from_data(
             1,
             (self.public_ip, self.port),
             source_addr
         )
-        datagram = json.dumps(rudp_packet.to_json())
+        datagram = rudp_packet.to_bytes()
 
         cm.datagramReceived(datagram, relay_addr)
         cm.connection_factory.make_new_connection.assert_called_once_with(
@@ -244,12 +246,12 @@ class TestConnectionManagerAPI(unittest.TestCase):
         transport = mock.Mock()
         cm = self._make_cm()
         cm.makeConnection(transport)
-        rudp_packet = packet.Packet(
+        rudp_packet = packet.Packet.from_data(
             1,
             ('132.54.76.98', 23456),
             (self.public_ip, self.port)
         )
-        datagram = json.dumps(rudp_packet.to_json())
+        datagram = rudp_packet.to_bytes()
 
         cm.send_datagram(datagram, ('132.54.76.98', 23456))
         transport.write.assert_called_once_with(
