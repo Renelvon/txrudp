@@ -2,7 +2,7 @@
 
 import collections
 
-from google import protobuf
+from google.protobuf import message
 from twisted.internet import protocol
 
 from txrudp import packet
@@ -123,7 +123,7 @@ class ConnectionMultiplexer(
         """
         try:
             rudp_packet = packet.Packet.from_bytes(datagram)
-        except (protobuf.DecodeError, TypeError):
+        except (message.DecodeError, TypeError):
             if self._logger is not None:
                 self._logger.info(
                     'Bad packet (bad protobuf format): {0}'.format(datagram)

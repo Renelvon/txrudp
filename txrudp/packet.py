@@ -103,9 +103,9 @@ class Packet(object):
             A protobuf-encoded bytestring.
 
         Raises:
-            protobuf.EncodeError: Serialization was unsuccessful;
-                maybe the object attributes have not been instatiated
-                with proper values.
+            protobuf.message.EncodeError: Serialization was
+                unsuccessful; maybe the object attributes have
+                not been instatiated with proper values.
         """
         return self._packet.SerializeToString()
 
@@ -122,8 +122,8 @@ class Packet(object):
             of the bytestring.
 
         Raises:
-            protobuf.DecodeError: Decoding the bytestring into
-                Packet was unsuccessful.
+            protobuf.message.DecodeError: Decoding the bytestring
+                into Packet was unsuccessful.
             ValidationError: One or more values was invalid.
         """
         new_packet = cls()
@@ -187,7 +187,7 @@ class Packet(object):
             value: True or False.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.syn = value
 
@@ -202,7 +202,7 @@ class Packet(object):
             value: True or False.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.fin = value
 
@@ -217,7 +217,7 @@ class Packet(object):
             value: A non-negative integer.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.sequence_number = value
 
@@ -232,7 +232,7 @@ class Packet(object):
             value: A non-negative integer.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.more_fragments = value
 
@@ -247,7 +247,7 @@ class Packet(object):
             value: A non-negative integer.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.ack = value
 
@@ -262,7 +262,7 @@ class Packet(object):
             value: Packet's payload, in bytes.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.payload = value
 
@@ -277,7 +277,7 @@ class Packet(object):
             value: An (IP, port) tuple.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.dest_ip, self._packet.dest_port = value
 
@@ -292,7 +292,7 @@ class Packet(object):
             value: An (IP, port) tuple.
 
         Raises:
-            google.protobuf.TypeError: Value has inappropriate type.
+            TypeError: Value has inappropriate type.
         """
         self._packet.source_ip, self._packet.source_port = value
 
