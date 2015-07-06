@@ -13,7 +13,7 @@ with codecs.open(path.join(_HERE, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='txrudp',
-    version='0.2.0',
+    version='0.3.0',
     description='A Twisted extension implementing RUDP',
     long_description=_LONG_DESCRIPTION,
     url='https://github.com/Renelvon/txrudp',
