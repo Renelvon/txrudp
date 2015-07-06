@@ -123,7 +123,7 @@ class ConnectionMultiplexer(
         """
         try:
             rudp_packet = packet.Packet.from_bytes(datagram)
-        except (message.DecodeError, TypeError):
+        except (message.DecodeError, TypeError, ValueError):
             if self._logger is not None:
                 self._logger.info(
                     'Bad packet (bad protobuf format): {0}'.format(datagram)
