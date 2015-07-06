@@ -4,6 +4,27 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`__.
 
+[0.3.0] - 2015-07-06
+--------------------
+
+Added
+~~~~~
+-  Add protobuf specification and skeleton class.
+-  ``Connection`` now has an ``unregister`` method that simplifies detaching
+   the instance from the protocol. Note: The said method is *not* automatically
+   invoked on connection shutdown.
+
+Changed
+~~~~~~~
+-  Replace JSON (de)serialization with protobuf (de)serialization; reap substantial speed boost.
+-  Support for Python 3 is dropped until protobuf supports it too.
+-  packet.Packet constructor signature is no longer suitable for obtaining instances;
+   use the new factory methods (``from_bytes``, ``from_data``).
+
+Fixed
+~~~~~
+-  Corrected typos in dependency specification.
+
 [0.2.0] - 2015-06-25
 --------------------
 
