@@ -790,3 +790,37 @@ class ConnectionFactory(object):
         )
         handler.connection = connection
         return connection
+
+
+class CryptoConnectionFactory(ConnectionFactory):
+
+    """A factory for CryptoConnections."""
+
+    def make_new_connection(
+        self,
+        proto_handle,
+        own_addr,
+        source_addr,
+        relay_addr,
+        private_key=None
+    ):
+        """
+        Create a new CryptoConnection.
+
+        In addition, create a handler and attach the connection to it.
+        """
+        handler = self.handler_factory.make_new_handler(
+            own_addr,
+            source_addr,
+            relay_addr
+        )
+        connection = CryptoConnection(
+            proto_handle,
+            handler,
+            own_addr,
+            source_addr,
+            relay_addr,
+            private_key
+        )
+        handler.connection = connection
+        return connection
