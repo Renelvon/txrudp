@@ -576,7 +576,15 @@ class CryptoConnection(Connection):
 
     """An encrypted RUDP connection."""
 
-    def __init__(self, proto, handler, own_addr, dest_addr, relay_addr=None):
+    def __init__(
+        self,
+        proto,
+        handler,
+        own_addr,
+        dest_addr,
+        relay_addr=None,
+        private_key=None
+    ):
         """
         Create a new connection and register it with the protocol.
 
@@ -588,18 +596,28 @@ class CryptoConnection(Connection):
             own_addr: Tuple of local host address (ip, port).
             dest_addr: Tuple of remote host address (ip, port).
             relay_addr: Tuple of relay host address (ip, port).
+            private_key: A private key for Curve25519, as a
+                hex-encoded public.PrivateKey. The instance will
+                automatically generate a new such key if one is not
+                provided.
 
         If a relay address is specified, all outgoing packets are
         sent to that adddress, but the packets contain the address
         of their final destination. This is used for routing.
         """
-        self._secret_key = public.PrivateKey.generate()
-        self._public_key = self._secret_key.public_key
-        self._crypto_box = None
-
         super(CryptoConnection, self).__init__(
             proto, handler, own_addr, dest_addr, relay_addr
         )
+
+        if private_key is None:
+            self._private_key = public.PrivateKey.generate()
+        else:
+            self._private_key = public.PrivateKey(
+                private_key,
+                encoder=encoding.HexEncoder
+            )
+        self._public_key = self._private_key.public_key
+        self._crypto_box = None
 
 
     def _finalize_packet(self, rudp_packet):
