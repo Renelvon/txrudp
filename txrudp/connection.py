@@ -667,40 +667,52 @@ class CryptoConnection(Connection):
             )
         return super(CryptoConnection, self)._finalize_packet(rudp_packet)
 
-
-    def receive_packet(self, rudp_packet):
+    def _process_casual_packet(self, rudp_packet):
         """
-        Process received packet and update connection state.
+        Process received packet.
 
-        For non-SYN packets, ensure packet is successfully decrypted
-        before processing any further; for SYN packets, try to create
-        a crypto box by combining the remote public key and the local
-        private key.
+        This method can only be called if the connection has been
+        established; ignore status of SYN flag. Ensure packet is
+        successfully decrypted before processing any further.
 
         Args:
-            rudp_packet: Received packet.Packet; it is assumed that
-                the packet has already been validated against
-                packet.RUDP_PACKET_JSON_SCHEMA.
+            rudp_packet: A packet.Packet with FIN and SYN flags unset.
         """
-        if rudp_packet.syn:
-            if self._crypto_box is None:
-                try:
-                    crypto_box = public.Box(
-                        self._secret_key,
-                        rudp_packet.payload
-                    )
-                except exceptions.CryptoError:
-                    pass
-                else:
-                    self._crypto_box = crypto_box
+        try:
+            rudp_packet.payload = self._crypto_box.decrypt(
+                rudp_packet.payload
+            )
+        except (exceptions.CryptoError, exceptions.BadSignatureError):
+            pass
         else:
+            super(CryptoConnection, self)._process_casual_packet(rudp_packet)
+
+    def _process_syn_packet(self, rudp_packet):
+        """
+        Process received SYN packet.
+
+        This method can only be called if the connection has not yet
+        been established. Try to create a crypto box by combining the
+        remote public key and the local private key, in order to
+        encrypt all future outbound traffic.
+
+        Args:
+            rudp_packet: A packet.Packet with SYN flag set.
+        """
+        if self._crypto_box is None:
             try:
-                plaintext = self._crypto_box.decrypt(rudp_packet.payload)
-            except (exceptions.CryptoError, exceptions.BadSignatureError)
+                remote_public_key = public.PublicKey(
+                    rudp_packet.payload,
+                    encoder=encoding.RawEncoder
+                )
+                self._crypto_box = public.Box(
+                    self._private_key,
+                    remote_public_key
+                )
+            except exceptions.CryptoError:
                 pass
             else:
-                rudp_packet.payload = plaintext
-                super(CryptoConnection, self).receive_packet(rudp_packet)
+                super(CryptoConnection, self)._process_syn_packet(rudp_packet)
 
 
 class Handler(object):
