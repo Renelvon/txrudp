@@ -11,7 +11,7 @@ import collections
 import enum
 import random
 
-from nacl import exceptions, public, utils
+from nacl import encoding, exceptions, public, utils
 from twisted.internet import reactor, task
 
 from txrudp import constants, heap, packet
@@ -651,7 +651,9 @@ class CryptoConnection(Connection):
             The protobuf-encoded version of the packet.
         """
         if rudp_packet.syn:
-            rudp_packet.payload = self._public_key
+            rudp_packet.payload = self._public_key.encode(
+                encoder=encoding.RawEncoder
+            )
         else:
             # Use a "mixed nonce"; half of the nonce bytes vary
             # deterministically, as they depend on the sequence number;
