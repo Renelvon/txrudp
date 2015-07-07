@@ -469,7 +469,7 @@ class Connection(object):
         established; ignore status of SYN flag.
 
         Args:
-            rudp_packet: A packet.Packet with FIN flag unset.
+            rudp_packet: A packet.Packet with SYN and FIN flags unset.
         """
         if rudp_packet.ack > 0:
             self._process_ack_packet(rudp_packet)
