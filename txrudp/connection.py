@@ -634,8 +634,7 @@ class CryptoConnection(Connection):
             The protobuf-encoded version of the packet.
         """
         if rudp_packet.syn:
-            if not rudp_packet.payload:
-                rudp_packet.payload = self._public_key
+            rudp_packet.payload = self._public_key
         else:
             nonce = utils.random(self._crypto_box,NONCE_SIZE)
             encrypted_payload = self._crypto_box.encrypt(payload, nonce)
