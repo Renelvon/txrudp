@@ -622,16 +622,16 @@ class CryptoConnection(Connection):
 
     def _finalize_packet(self, rudp_packet):
         """
-        Convert a packet.Packet to a string and consider crypto stuff.
+        Convert a packet.Packet to bytes and apply crypto stuff.
 
-        If it is a SYN packet, attach the public key; otherwise,
+        If it is a SYN packet, attach the public key; if not,
         encrypt the payload.
 
         Args:
             rudp_packet: A packet.Packet
 
         Returns:
-            The JSON version of the packet, formatted as a string.
+            The protobuf-encoded version of the packet.
         """
         if rudp_packet.syn:
             if not rudp_packet.payload:
