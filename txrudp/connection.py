@@ -619,6 +619,23 @@ class CryptoConnection(Connection):
         self._public_key = self._private_key.public_key
         self._crypto_box = None
 
+        self._left_nonce_bytes = utils.random(public.Box.NONCE_SIZE // 2)
+
+    def _make_nonce_from_num(self, num):
+        """
+        Construct a nonce from the num provided and the cached nonce bytes.
+
+        Args:
+            num: Seed integer.
+
+        Returns:
+            A bytes sequence of appropriate length.
+        """
+        right_nonce_bytes = '{0:0{1}}'.format(
+            num,
+            self._crypto_box.NONCE_SIZE // 2
+        )
+        return right_nonce_bytes + self._left_nonce_bytes
 
     def _finalize_packet(self, rudp_packet):
         """
@@ -636,10 +653,16 @@ class CryptoConnection(Connection):
         if rudp_packet.syn:
             rudp_packet.payload = self._public_key
         else:
-            nonce = utils.random(self._crypto_box,NONCE_SIZE)
-            encrypted_payload = self._crypto_box.encrypt(payload, nonce)
-            rudp_packet.payload = encrypted_payload
-
+            # Use a "mixed nonce"; half of the nonce bytes vary
+            # deterministically, as they depend on the sequence number;
+            # half are randomly generated upon connection setup and
+            # used until shutdown. Reusing the same nonce within the
+            # session is impossible, reusing the same nonce across
+            # different sessions (with the same key) is highly unilikely.
+            rudp_packet.payload = self._crypto_box.encrypt(
+                rudp_packet.payload,
+                self._make_nonce_from_num(rudp_packet.sequence_number)
+            )
         return super(CryptoConnection, self)._finalize_packet(rudp_packet)
 
 
