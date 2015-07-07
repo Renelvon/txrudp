@@ -522,7 +522,7 @@ class Connection(object):
         """
         if not self._sending_window:
             return
-        lowest_seqnum = min(self._sending_window.keys())
+        lowest_seqnum = iter(self._sending_window).next()
         if acknum >= lowest_seqnum:
             for seqnum in range(lowest_seqnum, acknum):
                 self._retire_scheduled_packet_with_seqnum(seqnum)
