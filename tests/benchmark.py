@@ -76,7 +76,7 @@ class BenchmarkLocalFullDuplex(object):
 class BenchmarkLocalFullDuplexBigPacket(
     BenchmarkLocalFullDuplex
 ):
-    big_message = 5 * constants.UDP_SAFE_SEGMENT_SIZE * 'a'
+    big_message = constants.UDP_SAFE_SEGMENT_SIZE * 'a'
 
     def packet_from_repetition(self, rep):
         return self.big_message
@@ -106,11 +106,11 @@ class BadConnectionMultiplexer(rudp.ConnectionMultiplexer):
 
 
 def main():
-    cf = connection.ConnectionFactory(StubHandlerFactory())
+    cf = connection.CryptoConnectionFactory(StubHandlerFactory())
     cm = BadConnectionMultiplexer(cf, '127.0.0.1', relaying=False)
-    benchmark = BenchmarkLocalFullDuplex(cm)
+    benchmark = BenchmarkLocalFullDuplexBigPacket(cm)
     sec_start = int(time.time())
-    benchmark.run(5000, 10)
+    benchmark.run(20000, 10)
     sec_end = int(time.time())
 
     rec1 = benchmark.con1.handler.received_count
