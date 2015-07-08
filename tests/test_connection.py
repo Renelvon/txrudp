@@ -121,6 +121,20 @@ class TestConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         con.shutdown()
 
+    def test_unregister(self):
+        proto_m_mock = mock.MagicMock(spec_set=rudp.ConnectionMultiplexer)
+        con = connection.Connection(
+            proto_m_mock,
+            self.handler_mock,
+            self.own_addr,
+            self.addr1
+        )
+        proto_m_mock[self.addr1] = con
+
+        con.shutdown()
+        con.unregister()
+        self.assertNotIn(con.dest_addr, proto_m_mock)
+
     # == Test CONNECTING state ==
 
     def test_shutdown_during_connecting(self):
