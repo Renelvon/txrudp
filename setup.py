@@ -36,5 +36,6 @@ setup(
     install_requires=('enum34', 'protobuf', 'pynacl', 'twisted'),
     tests_require=('coverage', 'nose', 'mock'),
     test_suite='nose.collector',
+    include_package_data=True,
     zip_safe=False
 )
