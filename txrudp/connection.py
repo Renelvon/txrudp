@@ -11,7 +11,6 @@ import collections
 import enum
 import random
 
-from nacl import encoding, exceptions, public, utils
 from twisted.internet import reactor, task
 
 from txrudp import constants, heap, packet
@@ -570,156 +569,6 @@ class Connection(object):
                 self._attempt_disabling_looping_receive()
 
 
-class CryptoConnection(Connection):
-
-    """An encrypted RUDP connection."""
-
-    def __init__(
-        self,
-        proto,
-        handler,
-        own_addr,
-        dest_addr,
-        relay_addr=None,
-        private_key=None
-    ):
-        """
-        Create a new connection and register it with the protocol.
-
-        Args:
-            proto: Handler to underlying protocol.
-            handler: Upstream recipient of received messages and
-                handler of other events. Should minimally implement
-                `receive_message` and `handle_shutdown`.
-            own_addr: Tuple of local host address (ip, port).
-            dest_addr: Tuple of remote host address (ip, port).
-            relay_addr: Tuple of relay host address (ip, port).
-            private_key: A private key for Curve25519, as a
-                hex-encoded public.PrivateKey. The instance will
-                automatically generate a new such key if one is not
-                provided.
-
-        If a relay address is specified, all outgoing packets are
-        sent to that adddress, but the packets contain the address
-        of their final destination. This is used for routing.
-        """
-        super(CryptoConnection, self).__init__(
-            proto, handler, own_addr, dest_addr, relay_addr
-        )
-
-        if private_key is None:
-            self._private_key = public.PrivateKey.generate()
-        else:
-            self._private_key = public.PrivateKey(
-                private_key,
-                encoder=encoding.HexEncoder
-            )
-        self._public_key = self._private_key.public_key
-        self._crypto_box = None
-        self._remote_public_key = None
-
-        self._left_nonce_bytes = utils.random(public.Box.NONCE_SIZE // 2)
-
-    @property
-    def remote_public_key(self):
-        """Return the byte-encoded remote public key."""
-        return self._remote_public_key
-
-    def _make_nonce_from_num(self, num):
-        """
-        Construct a nonce from the num provided and the cached nonce bytes.
-
-        Args:
-            num: Seed integer.
-
-        Returns:
-            A bytes sequence of appropriate length.
-        """
-        right_nonce_bytes = '{0:0{1}}'.format(
-            num,
-            self._crypto_box.NONCE_SIZE // 2
-        )
-        return right_nonce_bytes + self._left_nonce_bytes
-
-    def _finalize_packet(self, rudp_packet):
-        """
-        Convert a packet.Packet to bytes and apply crypto stuff.
-
-        If it is a SYN packet, attach the public key; if not,
-        encrypt the payload.
-
-        Args:
-            rudp_packet: A packet.Packet
-
-        Returns:
-            The protobuf-encoded version of the packet.
-        """
-        if rudp_packet.syn:
-            rudp_packet.payload = self._public_key.encode(
-                encoder=encoding.RawEncoder
-            )
-        else:
-            # Use a "mixed nonce"; half of the nonce bytes vary
-            # deterministically, as they depend on the sequence number;
-            # half are randomly generated upon connection setup and
-            # used until shutdown. Reusing the same nonce within the
-            # session is impossible, reusing the same nonce across
-            # different sessions (with the same key) is highly unilikely.
-            rudp_packet.payload = self._crypto_box.encrypt(
-                rudp_packet.payload,
-                self._make_nonce_from_num(rudp_packet.sequence_number)
-            )
-        return super(CryptoConnection, self)._finalize_packet(rudp_packet)
-
-    def _process_casual_packet(self, rudp_packet):
-        """
-        Process received packet.
-
-        This method can only be called if the connection has been
-        established; ignore status of SYN flag. Ensure packet is
-        successfully decrypted before processing any further.
-
-        Args:
-            rudp_packet: A packet.Packet with FIN and SYN flags unset.
-        """
-        try:
-            rudp_packet.payload = self._crypto_box.decrypt(
-                rudp_packet.payload
-            )
-        except (exceptions.CryptoError, exceptions.BadSignatureError):
-            pass
-        else:
-            super(CryptoConnection, self)._process_casual_packet(rudp_packet)
-
-    def _process_syn_packet(self, rudp_packet):
-        """
-        Process received SYN packet.
-
-        This method can only be called if the connection has not yet
-        been established. Try to create a crypto box by combining the
-        remote public key and the local private key, in order to
-        encrypt all future outbound traffic.
-
-        Args:
-            rudp_packet: A packet.Packet with SYN flag set.
-        """
-        if self._crypto_box is None:
-            try:
-                remote_public_key = public.PublicKey(
-                    rudp_packet.payload,
-                    encoder=encoding.RawEncoder
-                )
-                self._crypto_box = public.Box(
-                    self._private_key,
-                    remote_public_key
-                )
-            except (exceptions.CryptoError, ValueError):
-                pass
-            else:
-                self._remote_public_key = rudp_packet.payload
-                super(CryptoConnection, self)._process_syn_packet(rudp_packet)
-
-
 class Handler(object):
 
     """
@@ -806,40 +655,6 @@ class ConnectionFactory(object):
             own_addr,
             source_addr,
             relay_addr
-        )
-        handler.connection = connection
-        return connection
-
-
-class CryptoConnectionFactory(ConnectionFactory):
-
-    """A factory for CryptoConnections."""
-
-    def make_new_connection(
-        self,
-        proto_handle,
-        own_addr,
-        source_addr,
-        relay_addr,
-        private_key=None
-    ):
-        """
-        Create a new CryptoConnection.
-
-        In addition, create a handler and attach the connection to it.
-        """
-        handler = self.handler_factory.make_new_handler(
-            own_addr,
-            source_addr,
-            relay_addr
-        )
-        connection = CryptoConnection(
-            proto_handle,
-            handler,
-            own_addr,
-            source_addr,
-            relay_addr,
-            private_key
         )
         handler.connection = connection
         return connection
