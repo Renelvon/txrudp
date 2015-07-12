@@ -9,7 +9,7 @@ Classes:
 import functools
 import re
 
-import packet_pb2
+from txrudp import packet_pb2
 
 # IP validation regexes from the Regular Expressions Cookbook.
 # For now, only standard (non-compressed) IPv6 addresses are

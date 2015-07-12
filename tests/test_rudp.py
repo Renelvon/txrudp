@@ -52,7 +52,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm = self._make_cm()
         self.assertNotIn(self.addr1, cm)
         with self.assertRaises(KeyError):
-            con = cm[self.addr1]
+            _ = cm[self.addr1]
 
     def test_set_and_get_new_connection(self):
         cm = self._make_cm()
@@ -222,7 +222,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
     def test_make_new_connection(self):
         cm = self._make_cm()
-        con = cm.make_new_connection(self.addr1, self.addr2)
+        cm.make_new_connection(self.addr1, self.addr2)
         self.assertIn(self.addr2, cm)
         cm.connection_factory.make_new_connection.assert_called_once_with(
             cm,
@@ -233,7 +233,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
     def test_make_new_relaying_connection(self):
         cm = self._make_cm()
-        con = cm.make_new_connection(self.addr1, self.addr2, self.addr3)
+        cm.make_new_connection(self.addr1, self.addr2, self.addr3)
         self.assertIn(self.addr2, cm)
         cm.connection_factory.make_new_connection.assert_called_once_with(
             cm,

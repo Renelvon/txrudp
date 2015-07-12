@@ -10,6 +10,7 @@ from txrudp import rudp, constants, connection
 class StubHandler(connection.Handler):
 
     def __init__(self):
+        super(StubHandler, self).__init__()
         self.shutdown = False
         self.received_count = 0
         self.last_message = None
@@ -25,7 +26,7 @@ class StubHandler(connection.Handler):
 class StubHandlerFactory(connection.HandlerFactory):
 
     def __init__(self, *args, **kwargs):
-        return
+        super(StubHandlerFactory, self).__init__(*args, **kwargs)
 
     def make_new_handler(self, *args, **kwargs):
         return StubHandler()
@@ -55,7 +56,7 @@ class BenchmarkLocalFullDuplex(object):
             protocol=cm,
             interface=self.relay_addr[0]
         )
-        
+
     def run(self, repetitions, timeout):
         connection.REACTOR.callLater(timeout, self.stop)
         self.stuff_connections(repetitions)

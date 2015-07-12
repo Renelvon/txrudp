@@ -21,6 +21,7 @@ REACTOR = reactor
 
 State = enum.Enum('State', ('CONNECTING', 'CONNECTED', 'SHUTDOWN'))
 
+
 class Connection(object):
 
     """
@@ -327,12 +328,9 @@ class Connection(object):
             timeout: The timeout for this packet type.
         """
         final_packet = self._finalize_packet(rudp_packet)
-        timeout_cb = REACTOR.callLater(
-            0,
-            self._do_send_packet,
-            rudp_packet.sequence_number
-        )
-        self._sending_window[rudp_packet.sequence_number] = self.ScheduledPacket(
+        seqnum = rudp_packet.sequence_number
+        timeout_cb = REACTOR.callLater(0, self._do_send_packet, seqnum)
+        self._sending_window[seqnum] = self.ScheduledPacket(
             final_packet,
             timeout,
             timeout_cb,
