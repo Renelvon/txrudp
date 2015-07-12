@@ -63,3 +63,15 @@ CONNECTED
 
 SHUTDOWN
     The remote endpoint appears to be no longer accessible or not responding or the protocol has been broken in some other way. The local endpoint is no longer sending messages or processing received messages. The connection cannot be reestablished until both endpoints garbage-collect the current ``Connection`` objects and create new ones. A node may refuse to do so, if it believes that the remote endpoint is not worth communicating with; in such a case, the shutdown connection will silently siphon all incoming messages.
+
+Cryptographic support
+---------------------
+There is built-in support for confidential communications, provided by ``CryptoConnection`` and ``CryptoConnectionFactory``, using the well-known ``NaCl`` library. Here is a list of operational differences when using ``CryptoConnection``:
+
+- Each connection is optionally instantiated with a hex-encoded private ECC key suitable for use with the ``NaCl`` library. See the documentation of the ``PyNaCl`` package for further details. If such a private key is not given during instatiation, it is generated on the spot.
+
+- All SYN messages carry a payload: a byte-encoded public key suitable for use with the ``NaCl`` library. This public key should correspond to the private key the sender of the SYN message holds.
+
+- The payloads of all non-SYN messages are encrypted/decrypted using the ``Box`` constructed from the remote endpoint's public key and the local private key. This applies to ACK and FIN, as well, despite their payloads being empty, for reasons of sender authentication.
+
+**WARNING**: The user of a ``CryptoConnection`` class is responsible to validate the authenticity of a received public key. Failure to do so may lead to MitM attacks. Users of relayed connections should be especially vigilant.
