@@ -165,6 +165,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
         self.assertEqual(self.con.state, connection.State.CONNECTED)
+        self.assertEqual(self.con.remote_public_key, self.pubkey2_bytes)
 
     def test_receive_bad_syn_during_connecting(self):
         remote_seqnum = 42
@@ -180,6 +181,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
         self.assertEqual(self.con.state, connection.State.CONNECTING)
+        self.assertIsNone(self.con.remote_public_key)
 
     def test_receive_casual_during_connecting(self):
         remote_casual_packet = packet.Packet.from_data(

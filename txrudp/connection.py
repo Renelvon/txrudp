@@ -616,8 +616,14 @@ class CryptoConnection(Connection):
             )
         self._public_key = self._private_key.public_key
         self._crypto_box = None
+        self._remote_public_key = None
 
         self._left_nonce_bytes = utils.random(public.Box.NONCE_SIZE // 2)
+
+    @property
+    def remote_public_key(self):
+        """Return the byte-encoded remote public key."""
+        return self._remote_public_key
 
     def _make_nonce_from_num(self, num):
         """
@@ -710,6 +716,7 @@ class CryptoConnection(Connection):
             except (exceptions.CryptoError, ValueError):
                 pass
             else:
+                self._remote_public_key = rudp_packet.payload
                 super(CryptoConnection, self)._process_syn_packet(rudp_packet)
 
 
