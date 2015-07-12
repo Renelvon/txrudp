@@ -652,7 +652,7 @@ class CryptoConnection(Connection):
             rudp_packet.payload = self._public_key.encode(
                 encoder=encoding.RawEncoder
             )
-        else:
+        elif rudp_packet.payload:
             # Use a "mixed nonce"; half of the nonce bytes vary
             # deterministically, as they depend on the sequence number;
             # half are randomly generated upon connection setup and
