@@ -707,7 +707,7 @@ class CryptoConnection(Connection):
                     self._private_key,
                     remote_public_key
                 )
-            except exceptions.CryptoError:
+            except (exceptions.CryptoError, ValueError):
                 pass
             else:
                 super(CryptoConnection, self)._process_syn_packet(rudp_packet)
