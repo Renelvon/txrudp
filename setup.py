@@ -35,6 +35,6 @@ setup(
     packages=('txrudp', 'tests'),
     install_requires=('enum34', 'protobuf', 'pynacl', 'twisted'),
     tests_require=('coverage', 'nose', 'mock'),
-    test_suite='tests',
+    test_suite='nose.collector',
     zip_safe=False
 )
