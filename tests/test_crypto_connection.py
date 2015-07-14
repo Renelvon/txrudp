@@ -1,11 +1,19 @@
 import mock
-from nacl import encoding, public, utils
+from unittest import skipIf
+
+try:
+    from nacl import encoding, exceptions, public, utils
+except ImportError:
+    _NO_PYNACL = True
+else:
+    _NO_PYNACL = False
+
 from twisted.internet import reactor, task
 from twisted.trial import unittest
 
-from txrudp import connection, constants, packet, rudp
+from txrudp import crypto_connection, connection, constants, packet, rudp
 
-
+@skipIf(_NO_PYNACL, 'PyNaCl is not installed')
 class TestCryptoConnectionAPI(unittest.TestCase):
 
     @classmethod
@@ -34,6 +42,8 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         cls.remote_crypto_box = public.Box(cls.privkey2, cls.pubkey1)
         cls.nonce = utils.random(cls.remote_crypto_box.NONCE_SIZE)
 
+        cls.local_crypto_box = public.Box(cls.privkey1, cls.pubkey2)
+
         cls.privkey3_hex = '40246691a4362a220606dd302b03e992b5b5fe21026377fa56c9fe3f5afbcbd0'
         cls.privkey3 = public.PrivateKey(
             cls.privkey3_hex,
@@ -58,7 +68,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
 
         self.proto_mock = mock.Mock(spec_set=rudp.ConnectionMultiplexer)
         self.handler_mock = mock.Mock(spec_set=connection.Handler)
-        self.con = connection.CryptoConnection(
+        self.con = crypto_connection.CryptoConnection(
             self.proto_mock,
             self.handler_mock,
             self.own_addr,
@@ -145,8 +155,8 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
-        self.assertEqual(self.con.state, connection.State.SHUTDOWN)
-        self.handler_mock.handle_shutdown.assert_called_once_with()
+        self.assertEqual(self.con.state, connection.State.CONNECTING)
+        self.handler_mock.handle_shutdown.assert_not_called()
 
     def test_receive_ack_during_connecting(self):
         pass
@@ -270,28 +280,27 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         m_calls = self.proto_mock.send_datagram.call_args_list
 
         # Filter bare ACK packets.
-        sent_packets = tuple(
+        sent_packets = (
             packet.Packet.from_bytes(call[0][0])
             for call in self.proto_mock.send_datagram.call_args_list
         )
-        sent_bare_ack_datagrams = tuple(
-            sent_packet.to_bytes()
+        sent_bare_ack_packets = tuple(
+            sent_packet
             for sent_packet in sent_packets
-            if sent_packet.ack > 0 and not sent_packet.payload
+            if sent_packet.ack > 0 and sent_packet.sequence_number == 0
         )
 
-        self.assertEqual(len(sent_bare_ack_datagrams), 1)
-        expected_bare_ack_datagram = packet.Packet.from_data(
-            0,
-            self.con.dest_addr,
-            self.con.own_addr,
-            ack=self.next_remote_seqnum + 1,
-        ).to_bytes()
+        self.assertEqual(len(sent_bare_ack_packets), 1)
+        bare_ack_packet = sent_bare_ack_packets[0]
 
-        self.assertEqual(
-            sent_bare_ack_datagrams[0],
-            expected_bare_ack_datagram
-        )
+        try:
+            self.local_crypto_box.decrypt(bare_ack_packet.payload)
+        except (
+            exceptions.CryptoError,
+            exceptions.BadSignatureError,
+            ValueError
+        ):
+            self.fail('Outbound ACK packet was not encrypted.')
 
     def test_receive_casual_packet_during_connected(self):
         self._connecting_to_connected()
