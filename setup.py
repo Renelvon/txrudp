@@ -33,7 +33,10 @@ setup(
     ),
     keywords='rudp twisted reliable',
     packages=('txrudp', 'tests'),
-    install_requires=('enum34', 'protobuf', 'pynacl', 'twisted'),
+    install_requires=('enum34', 'protobuf', 'twisted'),
+    extras_require={
+        'crypto': ('pynacl',)
+    },
     tests_require=('coverage', 'nose', 'mock'),
     test_suite='nose.collector',
     include_package_data=True,
