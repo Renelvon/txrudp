@@ -4,6 +4,27 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`__.
 
+[0.4.0] - 2015-07-14
+--------------------
+
+Added
+~~~~~
+-  Add an optional encryption layer that uses ``pynacl`` to deliver baseline confidentiality.
+   To take advantage of the new feature, just use ``Crypto-`` classes instead of the casual ones.
+   The cryptographic keys generated are meant to be used only during a single connection, for
+   forward secrecy. However, one can also force usage of a specific private key; see the constructor
+   of ``CryptoConnection`` for more details.
+
+Changed
+~~~~~~~
+-  Support for OSes other than Linux is currently limited because of ``pynacl``'s restricted availability.
+-  Update and clarify specification of sequence numbers.
+
+Fixed
+~~~~~
+-  Minor fixes affecting docstrings and memory usage.
+-  Improved packaging.
+
 [0.3.0] - 2015-07-06
 --------------------
 

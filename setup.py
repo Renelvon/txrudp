@@ -13,7 +13,7 @@ with codecs.open(path.join(_HERE, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='txrudp',
-    version='0.3.0',
+    version='0.4.0',
     description='A Twisted extension implementing RUDP',
     long_description=_LONG_DESCRIPTION,
     url='https://github.com/Renelvon/txrudp',
@@ -25,7 +25,7 @@ setup(
         'Framework :: Twisted',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: Implementation :: CPython',
@@ -34,7 +34,11 @@ setup(
     keywords='rudp twisted reliable',
     packages=('txrudp', 'tests'),
     install_requires=('enum34', 'protobuf', 'twisted'),
+    extras_require={
+        'crypto': ('pynacl',)
+    },
     tests_require=('coverage', 'nose', 'mock'),
-    test_suite='tests',
+    test_suite='nose.collector',
+    include_package_data=True,
     zip_safe=False
 )

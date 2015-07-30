@@ -10,6 +10,7 @@ from txrudp import rudp, constants, connection
 class StubHandler(connection.Handler):
 
     def __init__(self):
+        super(StubHandler, self).__init__()
         self.shutdown = False
         self.received_count = 0
         self.last_message = None
@@ -25,7 +26,7 @@ class StubHandler(connection.Handler):
 class StubHandlerFactory(connection.HandlerFactory):
 
     def __init__(self, *args, **kwargs):
-        return
+        super(StubHandlerFactory, self).__init__(*args, **kwargs)
 
     def make_new_handler(self, *args, **kwargs):
         return StubHandler()
@@ -55,7 +56,7 @@ class BenchmarkLocalFullDuplex(object):
             protocol=cm,
             interface=self.relay_addr[0]
         )
-        
+
     def run(self, repetitions, timeout):
         connection.REACTOR.callLater(timeout, self.stop)
         self.stuff_connections(repetitions)
@@ -76,7 +77,7 @@ class BenchmarkLocalFullDuplex(object):
 class BenchmarkLocalFullDuplexBigPacket(
     BenchmarkLocalFullDuplex
 ):
-    big_message = 5 * constants.UDP_SAFE_SEGMENT_SIZE * 'a'
+    big_message = constants.UDP_SAFE_SEGMENT_SIZE * 'a'
 
     def packet_from_repetition(self, rep):
         return self.big_message
@@ -106,11 +107,11 @@ class BadConnectionMultiplexer(rudp.ConnectionMultiplexer):
 
 
 def main():
-    cf = connection.ConnectionFactory(StubHandlerFactory())
+    cf = connection.CryptoConnectionFactory(StubHandlerFactory())
     cm = BadConnectionMultiplexer(cf, '127.0.0.1', relaying=False)
-    benchmark = BenchmarkLocalFullDuplex(cm)
+    benchmark = BenchmarkLocalFullDuplexBigPacket(cm)
     sec_start = int(time.time())
-    benchmark.run(5000, 10)
+    benchmark.run(20000, 10)
     sec_end = int(time.time())
 
     rec1 = benchmark.con1.handler.received_count
