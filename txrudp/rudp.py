@@ -139,13 +139,14 @@ class ConnectionMultiplexer(
                     self.transport.write(datagram, rudp_packet.dest_addr)
             else:
                 con = self._active_connections.get(rudp_packet.source_addr)
-                if con is None:
+                if con is None and rudp_packet.get_syn():
                     con = self.make_new_connection(
                         (self.public_ip, self.port),
                         rudp_packet.source_addr,
                         addr
                     )
-                con.receive_packet(rudp_packet)
+                if con is not None:
+                    con.receive_packet(rudp_packet)
 
     def make_new_connection(self, own_addr, source_addr, relay_addr=None):
         """

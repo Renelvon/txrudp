@@ -4,6 +4,14 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`__.
 
+[0.4.1] - 2015-11-05
+--------------------
+
+Changed
+~~~~~~~
+-  Check that an incoming packet is a SYN packet before creating a new connection. Prevents a connect/disconnect
+   loop in some error cases.
+
 [0.4.0] - 2015-07-14
 --------------------
 
