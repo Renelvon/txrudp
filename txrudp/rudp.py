@@ -117,7 +117,7 @@ class ConnectionMultiplexer(
 
     def remove_ip_ban(self, ip_address):
         """
-        Remove and IP address from the ban list.
+        Remove an IP address from the ban list.
 
         Args:
             ip_address: a `String` IP address (without port).

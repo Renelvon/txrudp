@@ -114,6 +114,38 @@ class TestConnectionManagerAPI(unittest.TestCase):
         cm.datagramReceived(datagram, self.addr1)
         mock_connection.receive_packet.assert_not_called()
 
+    def test_receive_from_banned_ip(self):
+        cm = self._make_cm()
+        cm.ban_ip(self.addr1[0])
+
+        datagram = '!@#4noise%^&*'
+        cm.datagramReceived(datagram, self.addr1)
+        cm.connection_factory.make_new_connection.assert_not_called()
+
+        datagram = packet.Packet.from_data(
+            1,
+            self.addr2,
+            self.addr1
+        ).to_bytes()
+        cm.datagramReceived(datagram, self.addr3)
+        cm.connection_factory.make_new_connection.assert_not_called()
+
+        source_addr = self.addr1
+        mock_connection = cm.make_new_connection(
+            (self.public_ip, self.port),
+            source_addr
+        )
+        cm[source_addr] = mock_connection
+        rudp_packet = packet.Packet.from_data(
+            1,
+            (self.public_ip, self.port),
+            source_addr
+        )
+        datagram = rudp_packet.to_bytes()
+
+        cm.datagramReceived(datagram, source_addr)
+        mock_connection.receive_packet.assert_not_called()
+
     def _make_connected_cm(self):
         cm = self._make_cm()
         transport = mock.Mock(spec_set=udp.Port)
@@ -182,7 +214,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         rudp_packet = packet.Packet.from_data(
             1,
             (self.public_ip, self.port),
-            source_addr
+            source_addr,
+            syn=True
         )
         datagram = rudp_packet.to_bytes()
 
@@ -205,7 +238,8 @@ class TestConnectionManagerAPI(unittest.TestCase):
         rudp_packet = packet.Packet.from_data(
             1,
             (self.public_ip, self.port),
-            source_addr
+            source_addr,
+            syn=True
         )
         datagram = rudp_packet.to_bytes()
 
