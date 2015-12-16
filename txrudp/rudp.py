@@ -48,6 +48,7 @@ class ConnectionMultiplexer(
         self.port = None
         self.relaying = relaying
         self._active_connections = {}
+        self._banned_ips = []
         self._logger = logger
 
     def startProtocol(self):
@@ -103,6 +104,27 @@ class ConnectionMultiplexer(
         """Return iterator over the active contacts."""
         return iter(self._active_connections)
 
+    def ban_ip(self, ip_address):
+        """
+        Add an IP address to the ban list. No connections will be
+        made to this IP and packets will be dropped.
+
+        Args:
+            ip_address: a `String` IP address (without port).
+        """
+        if ip_address not in self._banned_ips:
+            self._banned_ips.append(ip_address)
+
+    def remove_ip_ban(self, ip_address):
+        """
+        Remove an IP address from the ban list.
+
+        Args:
+            ip_address: a `String` IP address (without port).
+        """
+        if ip_address in self._banned_ips:
+            self._banned_ips.remove(ip_address)
+
     def datagramReceived(self, datagram, addr):
         """
         Called when a datagram is received.
@@ -134,6 +156,9 @@ class ConnectionMultiplexer(
                     'Bad packet (invalid RUDP packet): {0}'.format(datagram)
                 )
         else:
+            if (addr[0] in self._banned_ips or
+               rudp_packet.source_addr[0] in self._banned_ips):
+                return
             if rudp_packet.dest_addr[0] != self.public_ip:
                 if self.relaying:
                     self.transport.write(datagram, rudp_packet.dest_addr)
