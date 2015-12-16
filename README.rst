@@ -43,12 +43,12 @@ License
 
 txrudp is released under the `MIT License <LICENSE>`__.
 
-.. |Build Status| image:: https://travis-ci.org/Renelvon/txrudp.svg?branch=master
-   :target: https://travis-ci.org/Renelvon/txrudp
+.. |Build Status| image:: https://travis-ci.org/OpenBazaar/txrudp.svg?branch=master
+   :target: https://travis-ci.org/OpenBazaar/txrudp
 .. |Code Health| image:: https://landscape.io/github/Renelvon/txrudp/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/Renelvon/txrudp/master
-.. |Coverage Status| image:: https://coveralls.io/repos/Renelvon/txrudp/badge.svg
-   :target: https://coveralls.io/r/Renelvon/txrudp
+   :target: https://landscape.io/github/OpenBazaar/txrudp/master
+.. |Coverage Status| image:: https://coveralls.io/repos/OpenBazaar/txrudp/badge.svg
+   :target: https://coveralls.io/r/OpenBazaar/txrudp
 .. |PyPI Status| image:: https://badge.fury.io/py/txrudp.svg
    :target: http://badge.fury.io/py/txrudp
    :alt: Latest PyPI version
