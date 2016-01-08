@@ -171,6 +171,8 @@ class ConnectionMultiplexer(
                         addr
                     )
                 if con is not None:
+                    if addr != rudp_packet.source_addr and addr != con.relay_addr:
+                        con.change_relay_address(addr)
                     con.receive_packet(rudp_packet)
 
     def make_new_connection(self, own_addr, source_addr, relay_addr=None):

@@ -119,6 +119,15 @@ class Connection(object):
         """Get the current state."""
         return self._state
 
+    def change_relay_address(self, relay_addr):
+        """
+        Change the relay address used on this connection.
+
+        Args:
+            relay_addr: Tuple of relay host address (ip, port).
+        """
+        self.relay_addr = self._Address(*relay_addr)
+
     def send_message(self, message):
         """
         Send a message to the connected remote host, asynchronously.
