@@ -205,7 +205,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
 
         cm.datagramReceived(datagram, source_addr)
         cm.connection_factory.make_new_connection.assert_not_called()
-        mock_connection.receive_packet.assert_called_once_with(rudp_packet)
+        mock_connection.receive_packet.assert_called_once_with(rudp_packet, source_addr)
 
     def test_receive_datagram_in_new_connection(self):
         cm = self._make_connected_cm()
@@ -228,7 +228,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         )
         self.assertIn(source_addr, cm)
         mock_connection = cm[source_addr]
-        mock_connection.receive_packet.assert_called_once_with(rudp_packet)
+        mock_connection.receive_packet.assert_called_once_with(rudp_packet, source_addr)
 
     def test_receive_datagram_in_new_relayed_connection(self):
         cm = self._make_connected_cm()
@@ -252,7 +252,7 @@ class TestConnectionManagerAPI(unittest.TestCase):
         )
         self.assertIn(source_addr, cm)
         mock_connection = cm[source_addr]
-        mock_connection.receive_packet.assert_called_once_with(rudp_packet)
+        mock_connection.receive_packet.assert_called_once_with(rudp_packet, relay_addr)
 
     def test_make_new_connection(self):
         cm = self._make_cm()

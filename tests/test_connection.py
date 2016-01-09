@@ -209,7 +209,7 @@ class TestConnectionAPI(unittest.TestCase):
             fin=True
         )
 
-        self.con.receive_packet(fin_rudp_packet)
+        self.con.receive_packet(fin_rudp_packet, self.con.relay_addr)
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
@@ -228,7 +228,7 @@ class TestConnectionAPI(unittest.TestCase):
             syn=True
         )
 
-        self.con.receive_packet(remote_syn_packet)
+        self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
         self.assertEqual(self.con.state, connection.State.CONNECTED)
@@ -242,7 +242,7 @@ class TestConnectionAPI(unittest.TestCase):
             ack=2**15
         )
 
-        self.con.receive_packet(remote_synack_packet)
+        self.con.receive_packet(remote_synack_packet, self.con.relay_addr)
         self.assertEqual(self.con.state, connection.State.CONNECTED)
 
     def test_receive_casual_during_connecting(self):
@@ -253,7 +253,7 @@ class TestConnectionAPI(unittest.TestCase):
             ack=2**15
         )
 
-        self.con.receive_packet(remote_casual_packet)
+        self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
@@ -270,7 +270,7 @@ class TestConnectionAPI(unittest.TestCase):
             ack=0,
             syn=True
         )
-        self.con.receive_packet(remote_synack_packet)
+        self.con.receive_packet(remote_synack_packet, self.con.relay_addr)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -368,7 +368,7 @@ class TestConnectionAPI(unittest.TestCase):
             payload=b'Yellow Submarine',
             ack=self.next_seqnum
         )
-        self.con.receive_packet(remote_casual_packet)
+        self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
         self.clock.advance(constants.BARE_ACK_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
@@ -409,7 +409,7 @@ class TestConnectionAPI(unittest.TestCase):
             payload=b'Yellow Submarine',
             ack=self.next_seqnum
         )
-        self.con.receive_packet(remote_casual_packet)
+        self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -434,7 +434,7 @@ class TestConnectionAPI(unittest.TestCase):
         )
 
         for p in reversed(remote_casual_packets):
-            self.con.receive_packet(p)
+            self.con.receive_packet(p, self.con.relay_addr)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -464,7 +464,7 @@ class TestConnectionAPI(unittest.TestCase):
         )
 
         for p in reversed(remote_casual_packets):
-            self.con.receive_packet(p)
+            self.con.receive_packet(p, self.con.relay_addr)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -512,7 +512,7 @@ class TestConnectionAPI(unittest.TestCase):
             ack=0,
             payload=b'Yellow Submarine'
         )
-        self.con.receive_packet(casual_rudp_packet)
+        self.con.receive_packet(casual_rudp_packet, self.con.relay_addr)
 
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()

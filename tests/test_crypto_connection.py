@@ -151,7 +151,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             fin=True
         )
 
-        self.con.receive_packet(fin_rudp_packet)
+        self.con.receive_packet(fin_rudp_packet, self.con.relay_addr)
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
@@ -171,7 +171,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             syn=True
         )
 
-        self.con.receive_packet(remote_syn_packet)
+        self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
         self.assertEqual(self.con.state, connection.State.CONNECTED)
@@ -187,7 +187,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             syn=True
         )
 
-        self.con.receive_packet(remote_syn_packet)
+        self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
         self.assertEqual(self.con.state, connection.State.CONNECTING)
@@ -202,7 +202,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             ack=2**15
         )
 
-        self.con.receive_packet(remote_casual_packet)
+        self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
 
@@ -219,7 +219,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             payload=self.pubkey2_bytes,
             syn=True
         )
-        self.con.receive_packet(remote_syn_packet)
+        self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -272,7 +272,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             payload=self._remote_encrypt_msg(b'Yellow Submarine'),
             ack=self.next_seqnum
         )
-        self.con.receive_packet(remote_casual_packet)
+        self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
         self.clock.advance(constants.BARE_ACK_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
@@ -312,7 +312,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             payload=self._remote_encrypt_msg(b'Yellow Submarine'),
             ack=self.next_seqnum
         )
-        self.con.receive_packet(remote_casual_packet)
+        self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -331,7 +331,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             payload=self._other_encrypt_msg(b'Yellow Submarine'),
             ack=self.next_seqnum
         )
-        self.con.receive_packet(remote_casual_packet)
+        self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
         self.clock.advance(0)
         connection.REACTOR.runUntilCurrent()
@@ -377,7 +377,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             ack=0,
             payload=b'Yellow Submarine'
         )
-        self.con.receive_packet(casual_rudp_packet)
+        self.con.receive_packet(casual_rudp_packet, self.con.relay_addr)
 
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
