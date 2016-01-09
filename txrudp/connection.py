@@ -122,7 +122,7 @@ class Connection(object):
     def set_relay_address(self, relay_addr):
         """
         Change the relay address used on this connection.
-
+\
         Args:
             relay_addr: Tuple of relay host address (ip, port).
         """
@@ -142,7 +142,7 @@ class Connection(object):
             self._segment_queue.append(segment)
         self._attempt_enabling_looping_send()
 
-    def receive_packet(self, rudp_packet):
+    def receive_packet(self, rudp_packet, from_addr):
         """
         Process received packet and update connection state.
 
@@ -155,6 +155,7 @@ class Connection(object):
 
         Args:
             rudp_packet: Received packet.Packet.
+            from_addr: Sender's address as Tuple (ip, port).
         """
         if self._state == State.SHUTDOWN:
             # A SHUTDOWN connection shall not process any packet
@@ -170,6 +171,8 @@ class Connection(object):
         else:
             if self._state == State.CONNECTED:
                 self._process_casual_packet(rudp_packet)
+        if from_addr not in (rudp_packet.source_addr, self.relay_addr):
+            self.set_relay_address(from_addr)
 
     def shutdown(self):
         """
