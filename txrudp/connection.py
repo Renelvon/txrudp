@@ -119,7 +119,7 @@ class Connection(object):
         """Get the current state."""
         return self._state
 
-    def change_relay_address(self, relay_addr):
+    def set_relay_address(self, relay_addr):
         """
         Change the relay address used on this connection.
 
