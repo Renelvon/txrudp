@@ -48,7 +48,7 @@ class ConnectionMultiplexer(
         self.port = None
         self.relaying = relaying
         self._active_connections = {}
-        self._banned_ips = []
+        self._banned_ips = set()
         self._logger = logger
 
     def startProtocol(self):
@@ -112,8 +112,7 @@ class ConnectionMultiplexer(
         Args:
             ip_address: a `String` IP address (without port).
         """
-        if ip_address not in self._banned_ips:
-            self._banned_ips.append(ip_address)
+        self._banned_ips.add(ip_address)
 
     def remove_ip_ban(self, ip_address):
         """
@@ -122,8 +121,7 @@ class ConnectionMultiplexer(
         Args:
             ip_address: a `String` IP address (without port).
         """
-        if ip_address in self._banned_ips:
-            self._banned_ips.remove(ip_address)
+        self._banned_ips.discard(ip_address)
 
     def datagramReceived(self, datagram, addr):
         """
