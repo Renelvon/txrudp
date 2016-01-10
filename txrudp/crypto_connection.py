@@ -113,7 +113,7 @@ class CryptoConnection(connection.Connection):
             )
         return super(CryptoConnection, self)._finalize_packet(rudp_packet)
 
-    def receive_packet(self, rudp_packet):
+    def receive_packet(self, rudp_packet, from_addr):
         """
         Process received packet and update connection state.
 
@@ -125,6 +125,7 @@ class CryptoConnection(connection.Connection):
 
         Args:
             rudp_packet: Received packet.Packet.
+            from_addr: Sender's address as Tuple (ip, port).
         """
         if rudp_packet.syn and self._crypto_box is None:
             # Try to create a crypto box for this connection, by
@@ -142,7 +143,7 @@ class CryptoConnection(connection.Connection):
                 pass
             else:
                 self._remote_public_key = rudp_packet.payload
-                super(CryptoConnection, self).receive_packet(rudp_packet)
+                super(CryptoConnection, self).receive_packet(rudp_packet, from_addr)
         elif not rudp_packet.syn and self._crypto_box is not None:
             try:
                 rudp_packet.payload = self._crypto_box.decrypt(
@@ -155,7 +156,7 @@ class CryptoConnection(connection.Connection):
             ):
                 pass
             else:
-                super(CryptoConnection, self).receive_packet(rudp_packet)
+                super(CryptoConnection, self).receive_packet(rudp_packet, from_addr)
 
 
 class CryptoConnectionFactory(connection.ConnectionFactory):

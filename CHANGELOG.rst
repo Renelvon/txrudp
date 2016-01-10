@@ -4,6 +4,17 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`__.
 
+[0.5.0] - 2015-01-09
+--------------------
+
+Added
+~~~~~
+-  Add ability to change relay node on a connection.
+
+Changed
+~~~~~~~
+-  Switched to using ``Set`` for banned IPs.
+
 
 [0.4.2] - 2015-12-16
 --------------------
