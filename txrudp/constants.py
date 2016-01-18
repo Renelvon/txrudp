@@ -13,7 +13,7 @@ PACKET_TIMEOUT = 0.6
 BARE_ACK_TIMEOUT = 0.01
 
 # [seconds]
-MAX_PACKET_DELAY = 20
+MAX_PACKET_DELAY = 5
 
 # If a packet is retransmitted more than that many times,
 # the connection should be considered broken.

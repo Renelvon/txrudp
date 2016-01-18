@@ -122,7 +122,7 @@ class Connection(object):
     def set_relay_address(self, relay_addr):
         """
         Change the relay address used on this connection.
-\
+
         Args:
             relay_addr: Tuple of relay host address (ip, port).
         """
@@ -163,6 +163,9 @@ class Connection(object):
             # SYN packet.
             return
 
+        if from_addr not in (rudp_packet.source_addr, self.relay_addr):
+            self.set_relay_address(from_addr)
+
         if rudp_packet.fin:
             self._process_fin_packet(rudp_packet)
         elif rudp_packet.syn:
@@ -171,8 +174,6 @@ class Connection(object):
         else:
             if self._state == State.CONNECTED:
                 self._process_casual_packet(rudp_packet)
-        if from_addr not in (rudp_packet.source_addr, self.relay_addr):
-            self.set_relay_address(from_addr)
 
     def shutdown(self):
         """
