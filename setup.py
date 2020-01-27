@@ -37,7 +37,7 @@ setup(
     extras_require={
         'crypto': ('pynacl',)
     },
-    tests_require=('coverage', 'nose', 'mock'),
+    tests_require=('check-manifest>=0.38', 'coverage', 'nose', 'mock'),
     test_suite='nose.collector',
     include_package_data=True,
     zip_safe=False
