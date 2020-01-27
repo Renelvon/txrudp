@@ -1,7 +1,7 @@
 txrudp
 ======
 
-|Build Status| |Coverage Status| |PyPI Status|
+|Build Status| |License| |Coverage Status| |PyPI Status|
 
 Implementation of a Reliable UDP Protocol Layer over Twisted.
 
@@ -47,6 +47,8 @@ txrudp is released under the `MIT License <LICENSE>`__.
    :target: https://travis-ci.org/OpenBazaar/txrudp
 .. |Coverage Status| image:: https://coveralls.io/repos/OpenBazaar/txrudp/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/OpenBazaar/txrudp?branch=master
+.. |License| image:: https://img.shields.io/pypi/l/txrudp?color=blue
+   :alt: MIT License
 .. |PyPI Status| image:: https://badge.fury.io/py/txrudp.svg
    :target: http://badge.fury.io/py/txrudp
    :alt: Latest PyPI version
