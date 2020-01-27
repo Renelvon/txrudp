@@ -1,2 +1,12 @@
+recursive-include txrudp *.proto *.py
+recursive-include tests *.py
+
+include CHANGELOG.rst
+include LICENSE
 include README.rst
 include SPECIFICATION.rst
+
+include Makefile
+include requirements.txt
+include setup.py
+include setup.cfg
