@@ -75,6 +75,5 @@ class Heap(collections.Container, collections.Sized):
         # fragments have 'sequential' sequence numbers, we can get all
         # of them with repeated calls to `_pop_min`.
         return tuple(
-            self._pop_min()
-            for _ in range(min_packet.more_fragments + 1)
+            self._pop_min() for _ in range(min_packet.more_fragments + 1)
         )

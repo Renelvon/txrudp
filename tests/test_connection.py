@@ -15,9 +15,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     def test_default_init(self):
         datagram = packet.Packet.from_data(
-            1,
-            ('123.45.67.89', 12345),
-            ('213.54.76.98', 54321)
+            1, ("123.45.67.89", 12345), ("213.54.76.98", 54321)
         ).to_bytes()
         timeout = 0.7
         timeout_cb = reactor.callLater(timeout, lambda: None)
@@ -32,9 +30,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     def test_init_with_retries(self):
         datagram = packet.Packet.from_data(
-            1,
-            ('123.45.67.89', 12345),
-            ('213.54.76.98', 54321)
+            1, ("123.45.67.89", 12345), ("213.54.76.98", 54321)
         ).to_bytes()
         timeout = 0.7
         timeout_cb = reactor.callLater(timeout, lambda: None)
@@ -49,9 +45,7 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
     def test_repr(self):
         datagram = packet.Packet.from_data(
-            1,
-            ('123.45.67.89', 12345),
-            ('213.54.76.98', 54321)
+            1, ("123.45.67.89", 12345), ("213.54.76.98", 54321)
         ).to_bytes()
         timeout = 0.7
         timeout_cb = reactor.callLater(timeout, lambda: None)
@@ -59,24 +53,20 @@ class TestScheduledPacketAPI(unittest.TestCase):
 
         self.assertEqual(
             repr(sp),
-            'ScheduledPacket({0}, {1}, {2}, {3})'.format(
-                datagram,
-                timeout,
-                timeout_cb,
-                sp.retries
-            )
+            "ScheduledPacket({0}, {1}, {2}, {3})".format(
+                datagram, timeout, timeout_cb, sp.retries
+            ),
         )
 
 
 class TestConnectionAPI(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
-        cls.public_ip = '123.45.67.89'
+        cls.public_ip = "123.45.67.89"
         cls.port = 12345
         cls.own_addr = (cls.public_ip, cls.port)
-        cls.addr1 = ('132.54.76.98', 54321)
-        cls.addr2 = ('231.76.45.89', 15243)
+        cls.addr1 = ("132.54.76.98", 54321)
+        cls.addr2 = ("231.76.45.89", 15243)
 
     def setUp(self):
         self.clock = task.Clock()
@@ -85,10 +75,7 @@ class TestConnectionAPI(unittest.TestCase):
         self.proto_mock = mock.Mock(spec_set=rudp.ConnectionMultiplexer)
         self.handler_mock = mock.Mock(spec_set=connection.Handler)
         self.con = connection.Connection(
-            self.proto_mock,
-            self.handler_mock,
-            self.own_addr,
-            self.addr1
+            self.proto_mock, self.handler_mock, self.own_addr, self.addr1
         )
 
     def tearDown(self):
@@ -109,7 +96,7 @@ class TestConnectionAPI(unittest.TestCase):
             self.handler_mock,
             self.own_addr,
             self.addr1,
-            self.addr2
+            self.addr2,
         )
 
         self.assertEqual(con.handler, self.handler_mock)
@@ -124,10 +111,7 @@ class TestConnectionAPI(unittest.TestCase):
     def test_unregister(self):
         proto_m_mock = mock.MagicMock(spec_set=rudp.ConnectionMultiplexer)
         con = connection.Connection(
-            proto_m_mock,
-            self.handler_mock,
-            self.own_addr,
-            self.addr1
+            proto_m_mock, self.handler_mock, self.own_addr, self.addr1
         )
         proto_m_mock[self.addr1] = con
 
@@ -158,13 +142,13 @@ class TestConnectionAPI(unittest.TestCase):
 
         self.assertEqual(address, self.con.relay_addr)
         self.assertGreater(syn_packet.sequence_number, 0)
-        self.assertLess(syn_packet.sequence_number, 2**16)
+        self.assertLess(syn_packet.sequence_number, 2 ** 16)
 
         expected_syn_packet = packet.Packet.from_data(
             syn_packet.sequence_number,
             self.con.dest_addr,
             self.con.own_addr,
-            syn=True
+            syn=True,
         ).to_bytes()
 
         for call in m_calls[:-1]:
@@ -172,10 +156,7 @@ class TestConnectionAPI(unittest.TestCase):
             self.assertEqual(call[0][1], address)
 
         expected_fin_packet = packet.Packet.from_data(
-            0,
-            self.con.dest_addr,
-            self.con.own_addr,
-            fin=True
+            0, self.con.dest_addr, self.con.own_addr, fin=True
         ).to_bytes()
 
         self.assertEqual(m_calls[-1][0][0], expected_fin_packet)
@@ -194,7 +175,7 @@ class TestConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
     def test_send_casual_during_connecting(self):
-        self.con.send_message('Yellow Submarine')
+        self.con.send_message("Yellow Submarine")
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
         m_calls = self.proto_mock.send_datagram.call_args_list
@@ -203,10 +184,7 @@ class TestConnectionAPI(unittest.TestCase):
 
     def test_receive_fin_during_connecting(self):
         fin_rudp_packet = packet.Packet.from_data(
-            0,
-            self.con.own_addr,
-            self.con.dest_addr,
-            fin=True
+            0, self.con.own_addr, self.con.dest_addr, fin=True
         )
 
         self.con.receive_packet(fin_rudp_packet, self.con.relay_addr)
@@ -222,10 +200,7 @@ class TestConnectionAPI(unittest.TestCase):
     def test_receive_syn_during_connecting(self):
         remote_seqnum = 42
         remote_syn_packet = packet.Packet.from_data(
-            remote_seqnum,
-            self.con.own_addr,
-            self.con.dest_addr,
-            syn=True
+            remote_seqnum, self.con.own_addr, self.con.dest_addr, syn=True
         )
 
         self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
@@ -235,11 +210,7 @@ class TestConnectionAPI(unittest.TestCase):
 
     def test_receive_synack_during_connecting(self):
         remote_synack_packet = packet.Packet.from_data(
-            42,
-            self.con.own_addr,
-            self.con.dest_addr,
-            syn=True,
-            ack=2**15
+            42, self.con.own_addr, self.con.dest_addr, syn=True, ack=2 ** 15
         )
 
         self.con.receive_packet(remote_synack_packet, self.con.relay_addr)
@@ -247,10 +218,7 @@ class TestConnectionAPI(unittest.TestCase):
 
     def test_receive_casual_during_connecting(self):
         remote_casual_packet = packet.Packet.from_data(
-            42,
-            self.con.own_addr,
-            self.con.dest_addr,
-            ack=2**15
+            42, self.con.own_addr, self.con.dest_addr, ack=2 ** 15
         )
 
         self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
@@ -264,11 +232,7 @@ class TestConnectionAPI(unittest.TestCase):
 
     def _connecting_to_connected(self):
         remote_synack_packet = packet.Packet.from_data(
-            42,
-            self.con.own_addr,
-            self.con.dest_addr,
-            ack=0,
-            syn=True
+            42, self.con.own_addr, self.con.dest_addr, ack=0, syn=True
         )
         self.con.receive_packet(remote_synack_packet, self.con.relay_addr)
 
@@ -288,7 +252,7 @@ class TestConnectionAPI(unittest.TestCase):
 
     def test_send_casual_message_during_connected(self):
         self._connecting_to_connected()
-        self.con.send_message(b'Yellow Submarine')
+        self.con.send_message(b"Yellow Submarine")
         self._advance_to_fin()
 
         # Filter casual packets.
@@ -303,8 +267,7 @@ class TestConnectionAPI(unittest.TestCase):
         )
 
         self.assertEqual(
-            len(sent_casual_datagrams),
-            constants.MAX_RETRANSMISSIONS
+            len(sent_casual_datagrams), constants.MAX_RETRANSMISSIONS
         )
 
         expected_casual_datagram = packet.Packet.from_data(
@@ -312,7 +275,7 @@ class TestConnectionAPI(unittest.TestCase):
             self.con.dest_addr,
             self.con.own_addr,
             ack=self.next_remote_seqnum,
-            payload=b'Yellow Submarine'
+            payload=b"Yellow Submarine",
         ).to_bytes()
 
         for sent_packet in sent_casual_datagrams:
@@ -321,11 +284,13 @@ class TestConnectionAPI(unittest.TestCase):
     def test_send_big_casual_message_during_connected(self):
         self._connecting_to_connected()
 
-        big_message = ''.join((
-            b'a' * constants.UDP_SAFE_SEGMENT_SIZE,
-            b'b' * constants.UDP_SAFE_SEGMENT_SIZE,
-            b'c' * constants.UDP_SAFE_SEGMENT_SIZE
-        ))
+        big_message = "".join(
+            (
+                b"a" * constants.UDP_SAFE_SEGMENT_SIZE,
+                b"b" * constants.UDP_SAFE_SEGMENT_SIZE,
+                b"c" * constants.UDP_SAFE_SEGMENT_SIZE,
+            )
+        )
         self.con.send_message(big_message)
 
         self.clock.advance(constants.PACKET_TIMEOUT)
@@ -351,9 +316,9 @@ class TestConnectionAPI(unittest.TestCase):
                 self.con.own_addr,
                 ack=self.next_remote_seqnum,
                 payload=payload * constants.UDP_SAFE_SEGMENT_SIZE,
-                more_fragments=2 - i
+                more_fragments=2 - i,
             ).to_bytes()
-            for i, payload in zip(range(3), b'abc')
+            for i, payload in zip(range(3), b"abc")
         )
 
         self.assertEqual(sent_casual_datagrams, expected_casual_datagrams)
@@ -365,8 +330,8 @@ class TestConnectionAPI(unittest.TestCase):
             self.next_remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
-            payload=b'Yellow Submarine',
-            ack=self.next_seqnum
+            payload=b"Yellow Submarine",
+            ack=self.next_seqnum,
         )
         self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
@@ -394,10 +359,7 @@ class TestConnectionAPI(unittest.TestCase):
             ack=self.next_remote_seqnum + 1,
         ).to_bytes()
 
-        self.assertEqual(
-            sent_bare_ack_datagrams[0],
-            expected_bare_ack_datagram
-        )
+        self.assertEqual(sent_bare_ack_datagrams[0], expected_bare_ack_datagram)
 
     def test_receive_casual_packet_during_connected(self):
         self._connecting_to_connected()
@@ -406,8 +368,8 @@ class TestConnectionAPI(unittest.TestCase):
             self.next_remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
-            payload=b'Yellow Submarine',
-            ack=self.next_seqnum
+            payload=b"Yellow Submarine",
+            ack=self.next_seqnum,
         )
         self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
@@ -415,20 +377,20 @@ class TestConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
         self.handler_mock.receive_message.assert_called_once_with(
-            b'Yellow Submarine'
+            b"Yellow Submarine"
         )
 
     def test_receive_casual_packets_during_connected(self):
         self._connecting_to_connected()
 
-        payloads = (b'a', b'b', b'c')
+        payloads = (b"a", b"b", b"c")
         remote_casual_packets = tuple(
             packet.Packet.from_data(
                 self.next_remote_seqnum + i,
                 self.con.own_addr,
                 self.con.dest_addr,
                 payload=payload,
-                ack=self.next_seqnum
+                ack=self.next_seqnum,
             )
             for i, payload in enumerate(payloads)
         )
@@ -447,9 +409,9 @@ class TestConnectionAPI(unittest.TestCase):
         self._connecting_to_connected()
 
         messages = (
-            b'a' * constants.UDP_SAFE_SEGMENT_SIZE,
-            b'b' * constants.UDP_SAFE_SEGMENT_SIZE,
-            b'c' * constants.UDP_SAFE_SEGMENT_SIZE,
+            b"a" * constants.UDP_SAFE_SEGMENT_SIZE,
+            b"b" * constants.UDP_SAFE_SEGMENT_SIZE,
+            b"c" * constants.UDP_SAFE_SEGMENT_SIZE,
         )
         remote_casual_packets = tuple(
             packet.Packet.from_data(
@@ -458,7 +420,7 @@ class TestConnectionAPI(unittest.TestCase):
                 self.con.dest_addr,
                 payload=payload,
                 ack=self.next_seqnum,
-                more_fragments=len(messages) - i - 1
+                more_fragments=len(messages) - i - 1,
             )
             for i, payload in enumerate(messages)
         )
@@ -470,7 +432,7 @@ class TestConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
         self.handler_mock.receive_message.assert_called_once_with(
-            ''.join(messages)
+            "".join(messages)
         )
 
     # == Test SHUTDOWN state ==
@@ -510,7 +472,7 @@ class TestConnectionAPI(unittest.TestCase):
             self.con.dest_addr,
             self.con.own_addr,
             ack=0,
-            payload=b'Yellow Submarine'
+            payload=b"Yellow Submarine",
         )
         self.con.receive_packet(casual_rudp_packet, self.con.relay_addr)
 

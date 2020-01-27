@@ -9,7 +9,7 @@ Classes:
 from nacl import encoding, exceptions, public, utils
 from twisted.internet import reactor, task
 
-from txrudp import connection 
+from txrudp import connection
 
 
 class CryptoConnection(connection.Connection):
@@ -23,7 +23,7 @@ class CryptoConnection(connection.Connection):
         own_addr,
         dest_addr,
         relay_addr=None,
-        private_key=None
+        private_key=None,
     ):
         """
         Create a new connection and register it with the protocol.
@@ -53,8 +53,7 @@ class CryptoConnection(connection.Connection):
             self._private_key = public.PrivateKey.generate()
         else:
             self._private_key = public.PrivateKey(
-                private_key,
-                encoder=encoding.HexEncoder
+                private_key, encoder=encoding.HexEncoder
             )
         self._public_key = self._private_key.public_key
         self._crypto_box = None
@@ -77,9 +76,8 @@ class CryptoConnection(connection.Connection):
         Returns:
             A bytes sequence of appropriate length.
         """
-        right_nonce_bytes = '{0:0{1}}'.format(
-            num,
-            self._crypto_box.NONCE_SIZE // 2
+        right_nonce_bytes = "{0:0{1}}".format(
+            num, self._crypto_box.NONCE_SIZE // 2
         )
         return right_nonce_bytes + self._left_nonce_bytes
 
@@ -109,7 +107,7 @@ class CryptoConnection(connection.Connection):
             # different sessions (with the same key) is highly unilikely.
             rudp_packet.payload = self._crypto_box.encrypt(
                 rudp_packet.payload,
-                self._make_nonce_from_num(rudp_packet.sequence_number)
+                self._make_nonce_from_num(rudp_packet.sequence_number),
             )
         return super(CryptoConnection, self)._finalize_packet(rudp_packet)
 
@@ -132,18 +130,18 @@ class CryptoConnection(connection.Connection):
             # combining remote public key and local private key.
             try:
                 remote_public_key = public.PublicKey(
-                    rudp_packet.payload,
-                    encoder=encoding.RawEncoder
+                    rudp_packet.payload, encoder=encoding.RawEncoder
                 )
                 self._crypto_box = public.Box(
-                    self._private_key,
-                    remote_public_key
+                    self._private_key, remote_public_key
                 )
             except (exceptions.CryptoError, ValueError):
                 pass
             else:
                 self._remote_public_key = rudp_packet.payload
-                super(CryptoConnection, self).receive_packet(rudp_packet, from_addr)
+                super(CryptoConnection, self).receive_packet(
+                    rudp_packet, from_addr
+                )
         elif not rudp_packet.syn and self._crypto_box is not None:
             try:
                 rudp_packet.payload = self._crypto_box.decrypt(
@@ -152,11 +150,13 @@ class CryptoConnection(connection.Connection):
             except (
                 exceptions.CryptoError,
                 exceptions.BadSignatureError,
-                ValueError
+                ValueError,
             ):
                 pass
             else:
-                super(CryptoConnection, self).receive_packet(rudp_packet, from_addr)
+                super(CryptoConnection, self).receive_packet(
+                    rudp_packet, from_addr
+                )
 
 
 class CryptoConnectionFactory(connection.ConnectionFactory):
@@ -164,12 +164,7 @@ class CryptoConnectionFactory(connection.ConnectionFactory):
     """A factory for CryptoConnections."""
 
     def make_new_connection(
-        self,
-        proto_handle,
-        own_addr,
-        source_addr,
-        relay_addr,
-        private_key=None
+        self, proto_handle, own_addr, source_addr, relay_addr, private_key=None
     ):
         """
         Create a new CryptoConnection.
@@ -177,9 +172,7 @@ class CryptoConnectionFactory(connection.ConnectionFactory):
         In addition, create a handler and attach the connection to it.
         """
         handler = self.handler_factory.make_new_handler(
-            own_addr,
-            source_addr,
-            relay_addr
+            own_addr, source_addr, relay_addr
         )
         connection = CryptoConnection(
             proto_handle,
@@ -187,7 +180,7 @@ class CryptoConnectionFactory(connection.ConnectionFactory):
             own_addr,
             source_addr,
             relay_addr,
-            private_key
+            private_key,
         )
         handler.connection = connection
         return connection

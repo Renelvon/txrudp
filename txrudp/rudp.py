@@ -9,8 +9,7 @@ from txrudp import packet
 
 
 class ConnectionMultiplexer(
-    protocol.DatagramProtocol,
-    collections.MutableMapping
+    protocol.DatagramProtocol, collections.MutableMapping
 ):
 
     """
@@ -20,11 +19,7 @@ class ConnectionMultiplexer(
     """
 
     def __init__(
-        self,
-        connection_factory,
-        public_ip,
-        relaying=False,
-        logger=None
+        self, connection_factory, public_ip, relaying=False, logger=None
     ):
         """
         Initialize a new multiplexer.
@@ -146,16 +141,18 @@ class ConnectionMultiplexer(
         except (message.DecodeError, TypeError, ValueError):
             if self._logger is not None:
                 self._logger.info(
-                    'Bad packet (bad protobuf format): {0}'.format(datagram)
+                    "Bad packet (bad protobuf format): {0}".format(datagram)
                 )
         except packet.ValidationError:
             if self._logger is not None:
                 self._logger.info(
-                    'Bad packet (invalid RUDP packet): {0}'.format(datagram)
+                    "Bad packet (invalid RUDP packet): {0}".format(datagram)
                 )
         else:
-            if (addr[0] in self._banned_ips or
-               rudp_packet.source_addr[0] in self._banned_ips):
+            if (
+                addr[0] in self._banned_ips
+                or rudp_packet.source_addr[0] in self._banned_ips
+            ):
                 return
             if rudp_packet.dest_addr[0] != self.public_ip:
                 if self.relaying:
@@ -166,7 +163,7 @@ class ConnectionMultiplexer(
                     con = self.make_new_connection(
                         (self.public_ip, self.port),
                         rudp_packet.source_addr,
-                        addr
+                        addr,
                     )
                 if con is not None:
                     con.receive_packet(rudp_packet, addr)
@@ -184,10 +181,7 @@ class ConnectionMultiplexer(
             A new connection.Connection
         """
         con = self.connection_factory.make_new_connection(
-            self,
-            own_addr,
-            source_addr,
-            relay_addr
+            self, own_addr, source_addr, relay_addr
         )
         self._active_connections[source_addr] = con
         return con
@@ -210,5 +204,5 @@ class ConnectionMultiplexer(
         for connection in self._active_connections.values():
             connection.shutdown()
 
-        if hasattr(self.transport, 'loseConnection'):
+        if hasattr(self.transport, "loseConnection"):
             self.transport.loseConnection()

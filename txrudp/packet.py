@@ -14,10 +14,10 @@ from txrudp import packet_pb2
 # IP validation regexes from the Regular Expressions Cookbook.
 # For now, only standard (non-compressed) IPv6 addresses are
 # supported. This might change in the future.
-_IPV4_REGEX = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
-_IPV6_REGEX = r'^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$'
+_IPV4_REGEX = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+_IPV6_REGEX = r"^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$"
 
-_IP_MATCHER = re.compile('({0})|({1})'.format(_IPV4_REGEX, _IPV6_REGEX))
+_IP_MATCHER = re.compile("({0})|({1})".format(_IPV4_REGEX, _IPV6_REGEX))
 
 
 class ValidationError(Exception):
@@ -47,7 +47,7 @@ class Packet(object):
         sequence_number,
         dest_addr,
         source_addr,
-        payload='',
+        payload="",
         more_fragments=0,
         ack=0,
         fin=False,
@@ -156,25 +156,19 @@ class Packet(object):
         """
         dest_ip, dest_port = packet.dest_addr
         if _IP_MATCHER.match(dest_ip) is None:
-            raise ValidationError(
-                'Bad destination IP: {0}.'.format(dest_ip)
-            )
+            raise ValidationError("Bad destination IP: {0}.".format(dest_ip))
 
         if not 1 <= dest_port <= 65535:
             raise ValidationError(
-                'Bad destination port: {0}.'.format(dest_port)
+                "Bad destination port: {0}.".format(dest_port)
             )
 
         source_ip, source_port = packet.source_addr
         if _IP_MATCHER.match(source_ip) is None:
-            raise ValidationError(
-                'Bad source IP: {0}.'.format(source_ip)
-            )
+            raise ValidationError("Bad source IP: {0}.".format(source_ip))
 
         if not 1 <= source_port <= 65535:
-            raise ValidationError(
-                'Bad source port: {0}.'.format(source_port)
-            )
+            raise ValidationError("Bad source port: {0}.".format(source_port))
 
     def get_syn(self):
         return self._packet.syn

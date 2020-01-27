@@ -6,18 +6,17 @@ from txrudp import packet
 
 
 class TestPacketAPI(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
-        cls.dest_addr = ('123.45.67.89', 12345)
-        cls.source_addr = ('132.45.67.89', 54321)
+        cls.dest_addr = ("123.45.67.89", 12345)
+        cls.source_addr = ("132.45.67.89", 54321)
 
     def test_from_data_with_minimal_parametres(self):
         p = packet.Packet.from_data(1, self.dest_addr, self.source_addr)
         self.assertEqual(p.sequence_number, 1)
         self.assertEqual(p.dest_addr, self.dest_addr)
         self.assertEqual(p.source_addr, self.source_addr)
-        self.assertEqual(p.payload, '')
+        self.assertEqual(p.payload, "")
         self.assertEqual(p.more_fragments, 0)
         self.assertEqual(p.ack, 0)
         self.assertFalse(p.fin)
@@ -28,16 +27,16 @@ class TestPacketAPI(unittest.TestCase):
             sequence_number=1,
             dest_addr=self.dest_addr,
             source_addr=self.source_addr,
-            payload=b'Yellow submarine',
+            payload=b"Yellow submarine",
             more_fragments=4,
             ack=28,
             fin=True,
-            syn=True
+            syn=True,
         )
         self.assertEqual(p.sequence_number, 1)
         self.assertEqual(p.dest_addr, self.dest_addr)
         self.assertEqual(p.source_addr, self.source_addr)
-        self.assertEqual(p.payload, b'Yellow submarine')
+        self.assertEqual(p.payload, b"Yellow submarine")
         self.assertEqual(p.more_fragments, 4)
         self.assertEqual(p.ack, 28)
         self.assertTrue(p.fin)
@@ -76,11 +75,11 @@ class TestPacketAPI(unittest.TestCase):
             sequence_number=1,
             dest_addr=self.dest_addr,
             source_addr=self.source_addr,
-            payload='Yellow submarine',
+            payload="Yellow submarine",
             more_fragments=4,
             ack=28,
             fin=True,
-            syn=True
+            syn=True,
         )
         bytes1 = p1.to_bytes()
         self.assertIsInstance(bytes1, six.binary_type)
@@ -95,35 +94,35 @@ class TestPacketAPI(unittest.TestCase):
     def test_validate_with_bad_dest_ip(self):
         p = packet.Packet.from_data(1, self.dest_addr, self.source_addr)
 
-        p.dest_addr = ('127.0', 1)
+        p.dest_addr = ("127.0", 1)
         self._assert_packet_fails_validation(p)
 
-        p.dest_addr = ('FE80:0000:0000::z:B3FF:FE1E:8329', 1)
+        p.dest_addr = ("FE80:0000:0000::z:B3FF:FE1E:8329", 1)
         self._assert_packet_fails_validation(p)
 
     def test_validate_with_bad_dest_port(self):
         p = packet.Packet.from_data(1, self.dest_addr, self.source_addr)
 
-        p.dest_addr = ('127.0.0.1', 0)
+        p.dest_addr = ("127.0.0.1", 0)
         self._assert_packet_fails_validation(p)
 
-        p.dest_addr = ('127.0.0.1', 65536)
+        p.dest_addr = ("127.0.0.1", 65536)
         self._assert_packet_fails_validation(p)
 
     def test_validate_with_bad_source_ip(self):
         p = packet.Packet.from_data(1, self.source_addr, self.source_addr)
 
-        p.source_addr = ('127.0', 1)
+        p.source_addr = ("127.0", 1)
         self._assert_packet_fails_validation(p)
 
-        p.source_addr = ('FE80:0000:0000::z:B3FF:FE1E:8329', 1)
+        p.source_addr = ("FE80:0000:0000::z:B3FF:FE1E:8329", 1)
         self._assert_packet_fails_validation(p)
 
     def test_validate_with_bad_source_port(self):
         p = packet.Packet.from_data(1, self.source_addr, self.source_addr)
 
-        p.source_addr = ('127.0.0.1', 0)
+        p.source_addr = ("127.0.0.1", 0)
         self._assert_packet_fails_validation(p)
 
-        p.source_addr = ('127.0.0.1', 65536)
+        p.source_addr = ("127.0.0.1", 65536)
         self._assert_packet_fails_validation(p)

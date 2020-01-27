@@ -4,7 +4,6 @@ from txrudp import heap, packet
 
 
 class TestHeapAPI(unittest.TestCase):
-
     def test_init(self):
         h = heap.Heap()
         self.assertEqual(len(h), 0)
@@ -12,9 +11,7 @@ class TestHeapAPI(unittest.TestCase):
     @staticmethod
     def _make_packet_with_seqnum(seqnum):
         return packet.Packet.from_data(
-            seqnum,
-            ('123.45.67.89', 12345),
-            ('98.76.54.32', 54321)
+            seqnum, ("123.45.67.89", 12345), ("98.76.54.32", 54321)
         )
 
     def test_push(self):

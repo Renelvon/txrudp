@@ -8,7 +8,6 @@ from txrudp import rudp, constants, connection
 
 
 class StubHandler(connection.Handler):
-
     def __init__(self):
         super(StubHandler, self).__init__()
         self.shutdown = False
@@ -24,7 +23,6 @@ class StubHandler(connection.Handler):
 
 
 class StubHandlerFactory(connection.HandlerFactory):
-
     def __init__(self, *args, **kwargs):
         super(StubHandlerFactory, self).__init__(*args, **kwargs)
 
@@ -33,28 +31,21 @@ class StubHandlerFactory(connection.HandlerFactory):
 
 
 class BenchmarkLocalFullDuplex(object):
-
     def __init__(self, cm):
         self.port = 53241
-        self.addr1 = ('127.0.0.1', 12345)
-        self.addr2 = ('127.0.0.1', 13245)
-        self.relay_addr = ('127.0.0.1', 53241)
+        self.addr1 = ("127.0.0.1", 12345)
+        self.addr2 = ("127.0.0.1", 13245)
+        self.relay_addr = ("127.0.0.1", 53241)
 
         self.con1 = cm.make_new_connection(
-            self.addr1,
-            self.addr2,
-            self.relay_addr
+            self.addr1, self.addr2, self.relay_addr
         )
         self.con2 = cm.make_new_connection(
-            self.addr2,
-            self.addr1,
-            self.relay_addr
+            self.addr2, self.addr1, self.relay_addr
         )
 
         self.socket_handle = connection.REACTOR.listenUDP(
-            port=self.relay_addr[1],
-            protocol=cm,
-            interface=self.relay_addr[0]
+            port=self.relay_addr[1], protocol=cm, interface=self.relay_addr[0]
         )
 
     def run(self, repetitions, timeout):
@@ -74,19 +65,15 @@ class BenchmarkLocalFullDuplex(object):
         connection.REACTOR.stop()
 
 
-class BenchmarkLocalFullDuplexBigPacket(
-    BenchmarkLocalFullDuplex
-):
-    big_message = constants.UDP_SAFE_SEGMENT_SIZE * 'a'
+class BenchmarkLocalFullDuplexBigPacket(BenchmarkLocalFullDuplex):
+    big_message = constants.UDP_SAFE_SEGMENT_SIZE * "a"
 
     def packet_from_repetition(self, rep):
         return self.big_message
 
 
-class BenchmarkLocalFullDuplexOversizedPacket(
-    BenchmarkLocalFullDuplex
-):
-    oversized_message = 20 * constants.UDP_SAFE_SEGMENT_SIZE * 'a'
+class BenchmarkLocalFullDuplexOversizedPacket(BenchmarkLocalFullDuplex):
+    oversized_message = 20 * constants.UDP_SAFE_SEGMENT_SIZE * "a"
 
     def packet_from_repetition(self, rep):
         return self.oversized_message
@@ -108,7 +95,7 @@ class BadConnectionMultiplexer(rudp.ConnectionMultiplexer):
 
 def main():
     cf = connection.CryptoConnectionFactory(StubHandlerFactory())
-    cm = BadConnectionMultiplexer(cf, '127.0.0.1', relaying=False)
+    cm = BadConnectionMultiplexer(cf, "127.0.0.1", relaying=False)
     benchmark = BenchmarkLocalFullDuplexBigPacket(cm)
     sec_start = int(time.time())
     benchmark.run(20000, 10)
@@ -127,5 +114,5 @@ def main():
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

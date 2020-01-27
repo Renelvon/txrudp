@@ -18,7 +18,7 @@ from txrudp import constants, heap, packet
 
 REACTOR = reactor
 
-State = enum.Enum('State', ('CONNECTING', 'CONNECTED', 'SHUTDOWN'))
+State = enum.Enum("State", ("CONNECTING", "CONNECTED", "SHUTDOWN"))
 
 
 class Connection(object):
@@ -31,7 +31,7 @@ class Connection(object):
     packets via other connections, to help with NAT traversal.
     """
 
-    _Address = collections.namedtuple('Address', ['ip', 'port'])
+    _Address = collections.namedtuple("Address", ["ip", "port"])
 
     class ScheduledPacket(object):
 
@@ -56,12 +56,12 @@ class Connection(object):
             self.retries = retries
 
         def __repr__(self):
-            return '{0}({1}, {2}, {3}, {4})'.format(
+            return "{0}({1}, {2}, {3}, {4})".format(
                 self.__class__.__name__,
                 self.rudp_packet,
                 self.timeout,
                 self.timeout_cb,
-                self.retries
+                self.retries,
             )
 
     def __init__(self, proto, handler, own_addr, dest_addr, relay_addr=None):
@@ -93,7 +93,7 @@ class Connection(object):
         self._proto = proto
         self._state = State.CONNECTING
 
-        self._next_sequence_number = random.randrange(2**16 - 2)
+        self._next_sequence_number = random.randrange(2 ** 16 - 2)
         self._next_expected_seqnum = 0
         self._next_delivered_seqnum = 0
 
@@ -227,7 +227,7 @@ class Connection(object):
         max_size = constants.UDP_SAFE_SEGMENT_SIZE
         count = (len(message) + max_size - 1) // max_size
         segments = (
-            (count - i - 1, message[i * max_size: (i + 1) * max_size])
+            (count - i - 1, message[i * max_size : (i + 1) * max_size])
             for i in range(count)
         )
         return segments
@@ -237,10 +237,10 @@ class Connection(object):
         Enable dequeuing if a packet can be scheduled immediately.
         """
         if (
-            not self._looping_send.running and
-            self._state == State.CONNECTED and
-            len(self._sending_window) < constants.WINDOW_SIZE and
-            len(self._segment_queue)
+            not self._looping_send.running
+            and self._state == State.CONNECTED
+            and len(self._sending_window) < constants.WINDOW_SIZE
+            and len(self._segment_queue)
         ):
             self._looping_send.start(0, now=True)
 
@@ -251,12 +251,10 @@ class Connection(object):
         Args:
             force: If True, force disabling.
         """
-        if (
-            self._looping_send.running and (
-                force or
-                len(self._sending_window) >= constants.WINDOW_SIZE or
-                not len(self._segment_queue)
-            )
+        if self._looping_send.running and (
+            force
+            or len(self._sending_window) >= constants.WINDOW_SIZE
+            or not len(self._segment_queue)
         ):
             self._looping_send.stop()
 
@@ -278,7 +276,7 @@ class Connection(object):
             self.dest_addr,
             self.own_addr,
             ack=self._next_expected_seqnum,
-            syn=True
+            syn=True,
         )
         self._schedule_send_in_order(syn_packet, constants.PACKET_TIMEOUT)
 
@@ -293,10 +291,7 @@ class Connection(object):
         each ACK timeout sends the latest ACK number available.
         """
         ack_packet = packet.Packet.from_data(
-            0,
-            self.dest_addr,
-            self.own_addr,
-            ack=self._next_expected_seqnum
+            0, self.dest_addr, self.own_addr, ack=self._next_expected_seqnum
         )
         self._schedule_send_out_of_order(ack_packet)
 
@@ -315,7 +310,7 @@ class Connection(object):
             self.dest_addr,
             self.own_addr,
             ack=self._next_expected_seqnum,
-            fin=True
+            fin=True,
         )
         self._schedule_send_out_of_order(fin_packet)
 
@@ -343,10 +338,7 @@ class Connection(object):
         seqnum = rudp_packet.sequence_number
         timeout_cb = REACTOR.callLater(0, self._do_send_packet, seqnum)
         self._sending_window[seqnum] = self.ScheduledPacket(
-            final_packet,
-            timeout,
-            timeout_cb,
-            0
+            final_packet, timeout, timeout_cb, 0
         )
 
     def _dequeue_outbound_message(self):
@@ -355,7 +347,7 @@ class Connection(object):
 
         Pause dequeueing if it would overflow the send window.
         """
-        assert self._segment_queue, 'Looping send active despite empty queue.'
+        assert self._segment_queue, "Looping send active despite empty queue."
         more_fragments, message = self._segment_queue.popleft()
 
         rudp_packet = packet.Packet.from_data(
@@ -364,7 +356,7 @@ class Connection(object):
             self.own_addr,
             message,
             more_fragments,
-            ack=self._next_expected_seqnum
+            ack=self._next_expected_seqnum,
         )
         self._schedule_send_in_order(rudp_packet, constants.PACKET_TIMEOUT)
 
@@ -412,9 +404,7 @@ class Connection(object):
         else:
             self._proto.send_datagram(sch_packet.rudp_packet, self.relay_addr)
             sch_packet.timeout_cb = REACTOR.callLater(
-                sch_packet.timeout,
-                self._do_send_packet,
-                seqnum
+                sch_packet.timeout, self._do_send_packet, seqnum
             )
             sch_packet.retries += 1
             self._cancel_ack_timeout()
@@ -551,9 +541,9 @@ class Connection(object):
     def _attempt_enabling_looping_receive(self):
         """Activate looping receive."""
         if (
-            not self._looping_receive.running and
-            self._state == State.CONNECTED and
-            self._receive_heap
+            not self._looping_receive.running
+            and self._state == State.CONNECTED
+            and self._receive_heap
         ):
             self._looping_receive.start(0, now=True)
 
@@ -575,7 +565,7 @@ class Connection(object):
             last_seqnum = fragments[-1].sequence_number
             self._update_next_expected_seqnum(last_seqnum)
             self._update_next_delivered_seqnum(last_seqnum)
-            payload = ''.join(f.payload for f in fragments)
+            payload = "".join(f.payload for f in fragments)
             self.handler.receive_message(payload)
 
             if self._next_delivered_seqnum not in self._receive_heap:
@@ -646,11 +636,7 @@ class ConnectionFactory(object):
         self.handler_factory = handler_factory
 
     def make_new_connection(
-        self,
-        proto_handle,
-        own_addr,
-        source_addr,
-        relay_addr
+        self, proto_handle, own_addr, source_addr, relay_addr
     ):
         """
         Create a new Connection.
@@ -658,16 +644,10 @@ class ConnectionFactory(object):
         In addition, create a handler and attach the connection to it.
         """
         handler = self.handler_factory.make_new_handler(
-            own_addr,
-            source_addr,
-            relay_addr
+            own_addr, source_addr, relay_addr
         )
         connection = Connection(
-            proto_handle,
-            handler,
-            own_addr,
-            source_addr,
-            relay_addr
+            proto_handle, handler, own_addr, source_addr, relay_addr
         )
         handler.connection = connection
         return connection

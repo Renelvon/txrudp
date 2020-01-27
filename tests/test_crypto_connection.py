@@ -13,28 +13,30 @@ from twisted.trial import unittest
 
 from txrudp import crypto_connection, connection, constants, packet, rudp
 
-@skipIf(_NO_PYNACL, 'PyNaCl is not installed')
-class TestCryptoConnectionAPI(unittest.TestCase):
 
+@skipIf(_NO_PYNACL, "PyNaCl is not installed")
+class TestCryptoConnectionAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.public_ip = '123.45.67.89'
+        cls.public_ip = "123.45.67.89"
         cls.port = 12345
         cls.own_addr = (cls.public_ip, cls.port)
-        cls.addr1 = ('132.54.76.98', 54321)
-        cls.addr2 = ('231.76.45.89', 15243)
-        cls.privkey1_hex = '71d1054068b224a4d9013104881dc7f46c6fec9a618f4574ae21059723e6c4f8'
+        cls.addr1 = ("132.54.76.98", 54321)
+        cls.addr2 = ("231.76.45.89", 15243)
+        cls.privkey1_hex = (
+            "71d1054068b224a4d9013104881dc7f46c6fec9a618f4574ae21059723e6c4f8"
+        )
         cls.privkey1 = public.PrivateKey(
-            cls.privkey1_hex,
-            encoder=encoding.HexEncoder
+            cls.privkey1_hex, encoder=encoding.HexEncoder
         )
         cls.pubkey1 = cls.privkey1.public_key
         cls.pubkey1_bytes = cls.pubkey1.encode(encoder=encoding.RawEncoder)
-        
-        cls.privkey2_hex = '4c107b7844368d0fb608f3d91ae194f2d62c7ff91b713e5b05c279e8b7fc61b3'
+
+        cls.privkey2_hex = (
+            "4c107b7844368d0fb608f3d91ae194f2d62c7ff91b713e5b05c279e8b7fc61b3"
+        )
         cls.privkey2 = public.PrivateKey(
-            cls.privkey2_hex,
-            encoder=encoding.HexEncoder
+            cls.privkey2_hex, encoder=encoding.HexEncoder
         )
         cls.pubkey2 = cls.privkey2.public_key
         cls.pubkey2_bytes = cls.pubkey2.encode(encoder=encoding.RawEncoder)
@@ -44,10 +46,11 @@ class TestCryptoConnectionAPI(unittest.TestCase):
 
         cls.local_crypto_box = public.Box(cls.privkey1, cls.pubkey2)
 
-        cls.privkey3_hex = '40246691a4362a220606dd302b03e992b5b5fe21026377fa56c9fe3f5afbcbd0'
+        cls.privkey3_hex = (
+            "40246691a4362a220606dd302b03e992b5b5fe21026377fa56c9fe3f5afbcbd0"
+        )
         cls.privkey3 = public.PrivateKey(
-            cls.privkey3_hex,
-            encoder=encoding.HexEncoder
+            cls.privkey3_hex, encoder=encoding.HexEncoder
         )
         cls.pubkey3 = cls.privkey3.public_key
         cls.pubkey3_bytes = cls.pubkey3.encode(encoder=encoding.RawEncoder)
@@ -73,7 +76,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.handler_mock,
             self.own_addr,
             self.addr1,
-            private_key=self.privkey1_hex
+            private_key=self.privkey1_hex,
         )
 
     def tearDown(self):
@@ -96,14 +99,14 @@ class TestCryptoConnectionAPI(unittest.TestCase):
 
         self.assertEqual(address, self.con.relay_addr)
         self.assertGreater(syn_packet.sequence_number, 0)
-        self.assertLess(syn_packet.sequence_number, 2**16)
+        self.assertLess(syn_packet.sequence_number, 2 ** 16)
 
         expected_syn_packet = packet.Packet.from_data(
             syn_packet.sequence_number,
             self.con.dest_addr,
             self.con.own_addr,
             payload=self.pubkey1_bytes,
-            syn=True
+            syn=True,
         ).to_bytes()
 
         for call in m_calls[:-1]:
@@ -111,10 +114,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.assertEqual(call[0][1], address)
 
         expected_fin_packet = packet.Packet.from_data(
-            0,
-            self.con.dest_addr,
-            self.con.own_addr,
-            fin=True
+            0, self.con.dest_addr, self.con.own_addr, fin=True
         ).to_bytes()
 
         self.assertEqual(m_calls[-1][0][0], expected_fin_packet)
@@ -133,7 +133,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
     def test_send_casual_during_connecting(self):
-        self.con.send_message(b'Yellow Submarine')
+        self.con.send_message(b"Yellow Submarine")
         self.clock.advance(100 * constants.PACKET_TIMEOUT)
         connection.REACTOR.runUntilCurrent()
 
@@ -145,10 +145,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
 
     def test_receive_fin_during_connecting(self):
         fin_rudp_packet = packet.Packet.from_data(
-            0,
-            self.con.own_addr,
-            self.con.dest_addr,
-            fin=True
+            0, self.con.own_addr, self.con.dest_addr, fin=True
         )
 
         self.con.receive_packet(fin_rudp_packet, self.con.relay_addr)
@@ -168,7 +165,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.con.own_addr,
             self.con.dest_addr,
             payload=self.pubkey2_bytes,
-            syn=True
+            syn=True,
         )
 
         self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
@@ -183,8 +180,8 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
-            payload='udfglaidufgalksdfjgalsdf',  # not a public key
-            syn=True
+            payload="udfglaidufgalksdfjgalsdf",  # not a public key
+            syn=True,
         )
 
         self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
@@ -198,8 +195,8 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             42,
             self.con.own_addr,
             self.con.dest_addr,
-            payload=b'Yellow Submarine',
-            ack=2**15
+            payload=b"Yellow Submarine",
+            ack=2 ** 15,
         )
 
         self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
@@ -217,7 +214,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.con.own_addr,
             self.con.dest_addr,
             payload=self.pubkey2_bytes,
-            syn=True
+            syn=True,
         )
         self.con.receive_packet(remote_syn_packet, self.con.relay_addr)
 
@@ -237,7 +234,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
 
     def test_send_casual_message_during_connected(self):
         self._connecting_to_connected()
-        self.con.send_message(b'Yellow Submarine')
+        self.con.send_message(b"Yellow Submarine")
         self._advance_to_fin()
 
         # Filter casual packets.
@@ -252,15 +249,12 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         )
 
         self.assertEqual(
-            len(sent_casual_datagrams),
-            constants.MAX_RETRANSMISSIONS
+            len(sent_casual_datagrams), constants.MAX_RETRANSMISSIONS
         )
 
-        ciphertext = packet.Packet.from_bytes(
-            sent_casual_datagrams[0]
-        ).payload
+        ciphertext = packet.Packet.from_bytes(sent_casual_datagrams[0]).payload
         plaintext = self.remote_crypto_box.decrypt(ciphertext)
-        self.assertEqual(plaintext, b'Yellow Submarine')
+        self.assertEqual(plaintext, b"Yellow Submarine")
 
     def test_send_ack_during_connected(self):
         self._connecting_to_connected()
@@ -269,8 +263,8 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.next_remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
-            payload=self._remote_encrypt_msg(b'Yellow Submarine'),
-            ack=self.next_seqnum
+            payload=self._remote_encrypt_msg(b"Yellow Submarine"),
+            ack=self.next_seqnum,
         )
         self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
@@ -298,9 +292,9 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         except (
             exceptions.CryptoError,
             exceptions.BadSignatureError,
-            ValueError
+            ValueError,
         ):
-            self.fail('Outbound ACK packet was not encrypted.')
+            self.fail("Outbound ACK packet was not encrypted.")
 
     def test_receive_casual_packet_during_connected(self):
         self._connecting_to_connected()
@@ -309,8 +303,8 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.next_remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
-            payload=self._remote_encrypt_msg(b'Yellow Submarine'),
-            ack=self.next_seqnum
+            payload=self._remote_encrypt_msg(b"Yellow Submarine"),
+            ack=self.next_seqnum,
         )
         self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
@@ -318,7 +312,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
         connection.REACTOR.runUntilCurrent()
 
         self.handler_mock.receive_message.assert_called_once_with(
-            b'Yellow Submarine'
+            b"Yellow Submarine"
         )
 
     def test_receive_rogue_casual_packet_during_connected(self):
@@ -328,8 +322,8 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.next_remote_seqnum,
             self.con.own_addr,
             self.con.dest_addr,
-            payload=self._other_encrypt_msg(b'Yellow Submarine'),
-            ack=self.next_seqnum
+            payload=self._other_encrypt_msg(b"Yellow Submarine"),
+            ack=self.next_seqnum,
         )
         self.con.receive_packet(remote_casual_packet, self.con.relay_addr)
 
@@ -375,7 +369,7 @@ class TestCryptoConnectionAPI(unittest.TestCase):
             self.con.dest_addr,
             self.con.own_addr,
             ack=0,
-            payload=b'Yellow Submarine'
+            payload=b"Yellow Submarine",
         )
         self.con.receive_packet(casual_rudp_packet, self.con.relay_addr)
 
