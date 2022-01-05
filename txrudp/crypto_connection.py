@@ -42,7 +42,7 @@ class CryptoConnection(connection.Connection):
                 provided.
 
         If a relay address is specified, all outgoing packets are
-        sent to that adddress, but the packets contain the address
+        sent to that address, but the packets contain the address
         of their final destination. This is used for routing.
         """
         super(CryptoConnection, self).__init__(

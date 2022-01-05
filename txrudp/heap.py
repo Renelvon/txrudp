@@ -52,7 +52,7 @@ class Heap(collections.Container, collections.Sized):
         """
         Attempt to pop the packet at the top, and its fragments.
 
-        For the operation to succedd, all the fragments of the minimum
+        For the operation to succeed, all the fragments of the minimum
         packet should reside in the heap. If so, all fragments are
         popped from the heap and returned in order.
 

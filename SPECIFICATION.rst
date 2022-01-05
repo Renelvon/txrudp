@@ -5,7 +5,7 @@ General
 
 Packet structure
 ----------------
-An *RUDP packet* is a Python object that can be serialized and deserialized using the protobuf spec described in ``txrudp/packet.proto`` and repeated here for reference. Conformant implementations of the ``txrudp`` protocol MUST reject (silently or not) any packet that violates the said spec. During transmission, the packet SHOULD be encoded using protobuf. Ports and IP fields SHOULD conform to standard requirements. IPv6 addreses are allowed.
+An *RUDP packet* is a Python object that can be serialized and deserialized using the protobuf spec described in ``txrudp/packet.proto`` and repeated here for reference. Conformant implementations of the ``txrudp`` protocol MUST reject (silently or not) any packet that violates the said spec. During transmission, the packet SHOULD be encoded using protobuf. Ports and IP fields SHOULD conform to standard requirements. IPv6 addresses are allowed.
 
 ::
 

@@ -78,7 +78,7 @@ class Connection(object):
             relay_addr: Tuple of relay host address (ip, port).
 
         If a relay address is specified, all outgoing packets are
-        sent to that adddress, but the packets contain the address
+        sent to that address, but the packets contain the address
         of their final destination. This is used for routing.
         """
         self.own_addr = self._Address(*own_addr)
