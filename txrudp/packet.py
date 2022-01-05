@@ -58,8 +58,8 @@ class Packet(object):
 
         Args:
             seqnum: The packet's sequence number, as an int.
-            dest_addr: Tuple of destination addres (ip, port).
-            source_addr: Tuple of local host addres (ip, port).
+            dest_addr: Tuple of destination address (ip, port).
+            source_addr: Tuple of local host address (ip, port).
             payload: The packet's payload, as a string.
             more_fragments: The number of segments that follow this
                 packet and are delivering remaining parts of the same
@@ -68,7 +68,7 @@ class Packet(object):
                 the next packet the receiver is expecting. Otherwise,
                 ignore.
             fin: When True, signals that this packet ends the connection.
-            syn: When True, signals the start of a new conenction.
+            syn: When True, signals the start of a new connection.
 
         Return:
             An initialized Packet.
